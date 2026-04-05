@@ -1,0 +1,1157 @@
+{
+  "vulnerabilities": [
+    {
+      "id": "VULN-001",
+      "cve": "CVE-2022-22947",
+      "technology": "spring_cloud",
+      "affected_paths": ["/actuator/gateway/routes", "/actuator/gateway/globalfilters"],
+      "title": "Spring Cloud Gateway Code Injection (SpEL)",
+      "severity": "critical",
+      "cvss": 10.0,
+      "description": "Spring Cloud Gateway versions prior to 3.1.1 and 3.0.7 are vulnerable to remote code execution via SpEL injection when the Gateway Actuator endpoint is enabled and exposed.",
+      "exploitation": "POST to /actuator/gateway/routes with a crafted route containing SpEL expression in predicates or filters. Then POST to /actuator/gateway/refresh to activate.",
+      "remediation": "Upgrade to Spring Cloud Gateway 3.1.1+ or 3.0.7+. Disable gateway actuator endpoints.",
+      "references": [
+        "https://spring.io/security/cve-2022-22947",
+        "https://wya.pl/2022/02/09/cve-2022-22947-spring-cloud-gateway-code-injection/"
+      ],
+      "detection": {
+        "path": "/actuator/gateway/routes",
+        "method": "GET",
+        "success_indicators": ["route_id", "predicates", "filters"]
+      }
+    },
+    {
+      "id": "VULN-002",
+      "cve": "CVE-2022-22963",
+      "technology": "spring_cloud",
+      "affected_paths": ["/functionRouter"],
+      "title": "Spring Cloud Function SpEL Injection RCE",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Spring Cloud Function versions 3.1.6, 3.2.2 and older contain a SpEL injection vulnerability allowing RCE via the spring.cloud.function.routing-expression HTTP header.",
+      "exploitation": "Send POST to /functionRouter with header 'spring.cloud.function.routing-expression: T(java.lang.Runtime).getRuntime().exec(\"command\")'",
+      "remediation": "Upgrade to Spring Cloud Function 3.1.7+ or 3.2.3+",
+      "references": [
+        "https://spring.io/security/cve-2022-22963"
+      ],
+      "detection": {
+        "path": "/functionRouter",
+        "method": "POST",
+        "success_indicators": ["500"]
+      }
+    },
+    {
+      "id": "VULN-003",
+      "cve": "CVE-2022-22965",
+      "technology": "spring_boot_actuator",
+      "affected_paths": ["/*"],
+      "title": "Spring4Shell - Spring Framework RCE",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Spring Framework versions 5.3.0-5.3.17, 5.2.0-5.2.19 when running on JDK 9+ allow RCE via data binding to class.module.classLoader properties.",
+      "exploitation": "Modify class.module.classLoader.resources.context.parent.pipeline.first.* properties to write a JSP webshell via Tomcat AccessLogValve.",
+      "remediation": "Upgrade to Spring Framework 5.3.18+ or 5.2.20+",
+      "references": [
+        "https://spring.io/security/cve-2022-22965",
+        "https://www.lunasec.io/docs/blog/spring-rce-vulnerabilities/"
+      ],
+      "detection": {
+        "path": "/*",
+        "method": "POST",
+        "note": "Requires specific conditions: JDK9+, Tomcat, WAR deployment"
+      }
+    },
+    {
+      "id": "VULN-004",
+      "cve": null,
+      "technology": "spring_boot_actuator",
+      "affected_paths": ["/actuator/env", "/env", "/actuator/configprops", "/configprops"],
+      "title": "Spring Boot Actuator Environment Endpoint - Secret Exposure",
+      "severity": "high",
+      "cvss": 7.5,
+      "description": "Exposed Spring Boot Actuator /env endpoint reveals environment properties including database credentials, API keys, and other secrets. While Spring Boot 2.x masks sensitive values, the /actuator/env POST endpoint can be used to modify properties, and /actuator/refresh can trigger re-binding.",
+      "exploitation": "GET /actuator/env to enumerate property sources. Some versions expose plaintext secrets. Use eureka.client.serviceUrl.defaultZone property modification for SSRF/credential capture.",
+      "remediation": "Restrict actuator endpoints to management port. Use Spring Security to protect endpoints. Set management.endpoints.web.exposure.include to only health,info.",
+      "references": [
+        "https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html"
+      ],
+      "detection": {
+        "path": "/actuator/env",
+        "method": "GET",
+        "success_indicators": ["propertySources", "activeProfiles", "systemProperties"]
+      }
+    },
+    {
+      "id": "VULN-005",
+      "cve": null,
+      "technology": "spring_boot_actuator",
+      "affected_paths": ["/actuator/heapdump", "/heapdump"],
+      "title": "Spring Boot Actuator Heap Dump - Memory Secrets Exposure",
+      "severity": "critical",
+      "cvss": 9.1,
+      "description": "Exposed heapdump endpoint allows downloading JVM heap memory, which contains in-memory secrets including session tokens, passwords, encryption keys, and API credentials.",
+      "exploitation": "GET /actuator/heapdump downloads an HPROF file. Use Eclipse MAT or jhat to analyze. Search for strings like 'password', 'secret', 'token', session cookies.",
+      "remediation": "Never expose heapdump endpoint. Remove from management.endpoints.web.exposure.include.",
+      "references": [
+        "https://spaceraccoon.dev/analyzing-actuator-heapdumps-with-eclipse-mat/"
+      ],
+      "detection": {
+        "path": "/actuator/heapdump",
+        "method": "GET",
+        "success_indicators": ["content-type: application/octet-stream", "large response body"]
+      }
+    },
+    {
+      "id": "VULN-006",
+      "cve": null,
+      "technology": "spring_boot_actuator",
+      "affected_paths": ["/actuator/mappings", "/mappings"],
+      "title": "Spring Boot Actuator Mappings - API Endpoint Discovery",
+      "severity": "medium",
+      "cvss": 5.3,
+      "description": "Exposed mappings endpoint reveals all URL-to-controller mappings including internal/admin endpoints not intended for public access.",
+      "exploitation": "GET /actuator/mappings returns all Spring MVC handler mappings. Parse for admin, internal, debug endpoints.",
+      "remediation": "Restrict actuator endpoints. Do not expose mappings in production.",
+      "references": [],
+      "detection": {
+        "path": "/actuator/mappings",
+        "method": "GET",
+        "success_indicators": ["dispatcherServlets", "handler", "requestMappingConditions"]
+      }
+    },
+    {
+      "id": "VULN-007",
+      "cve": null,
+      "technology": "jolokia",
+      "affected_paths": ["/jolokia", "/actuator/jolokia", "/jolokia/exec", "/jolokia/list"],
+      "title": "Jolokia JMX Remote Code Execution",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Exposed Jolokia endpoint provides JMX access over HTTP, allowing reading system properties, environment variables, and potentially executing arbitrary code via MBean operations.",
+      "exploitation": "1) List MBeans: GET /jolokia/list. 2) RCE via Logback JNDI: POST to /jolokia/exec with ch.qos.logback reloadByURL pointing to attacker's LDAP/RMI. 3) Read system props: /jolokia/read/java.lang:type=Runtime/SystemProperties",
+      "remediation": "Disable Jolokia endpoint. If needed, configure Jolokia policy to restrict operations.",
+      "references": [
+        "https://blog.it-security.rocks/2022/01/12/jolokia-exploitation/",
+        "https://jolokia.org/reference/html/security.html"
+      ],
+      "detection": {
+        "path": "/jolokia/version",
+        "method": "GET",
+        "success_indicators": ["\"agent\"", "\"protocol\"", "\"config\""]
+      }
+    },
+    {
+      "id": "VULN-008",
+      "cve": "CVE-2017-5638",
+      "technology": "struts",
+      "affected_paths": ["/*.action", "/*.do"],
+      "title": "Apache Struts2 Remote Code Execution (Content-Type)",
+      "severity": "critical",
+      "cvss": 10.0,
+      "description": "Apache Struts 2.3.x before 2.3.32 and 2.5.x before 2.5.10.1 allow RCE when performing file upload with Jakarta Multipart parser due to OGNL evaluation of Content-Type header.",
+      "exploitation": "Send multipart request with crafted Content-Type header containing OGNL expression.",
+      "remediation": "Upgrade to Struts 2.3.32+ or 2.5.10.1+",
+      "references": [
+        "https://cwiki.apache.org/confluence/display/WW/S2-045"
+      ],
+      "detection": {
+        "path": "/*.action",
+        "method": "GET",
+        "note": "Detect Struts presence first, then check version"
+      }
+    },
+    {
+      "id": "VULN-009",
+      "cve": "CVE-2023-50164",
+      "technology": "struts",
+      "affected_paths": ["/*.action"],
+      "title": "Apache Struts2 File Upload Path Traversal RCE",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Apache Struts 2.0.0 through 6.3.0 vulnerable to path traversal in file upload, allowing attacker to upload files to arbitrary locations and achieve RCE.",
+      "exploitation": "Manipulate file upload parameters to traverse path and write webshell.",
+      "remediation": "Upgrade to Struts 6.3.0.2+ or 2.5.33+",
+      "references": [
+        "https://cwiki.apache.org/confluence/display/WW/S2-066"
+      ],
+      "detection": {
+        "path": "/*.action",
+        "method": "GET",
+        "note": "Requires Struts presence detection and file upload functionality"
+      }
+    },
+    {
+      "id": "VULN-010",
+      "cve": "CVE-2020-14882",
+      "technology": "weblogic",
+      "affected_paths": ["/console/css/%252e%252e%252fconsole.portal", "/console/images/%252e%252e%252fconsole.portal"],
+      "title": "WebLogic Console Authentication Bypass",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Oracle WebLogic Server allows unauthenticated attackers to reach the admin console through path traversal using double-encoded dots.",
+      "exploitation": "GET /console/css/%252e%252e%252fconsole.portal to bypass authentication. Chain with CVE-2020-14883 for RCE.",
+      "remediation": "Apply Oracle Critical Patch Update. Restrict console access to management network.",
+      "references": [
+        "https://www.oracle.com/security-alerts/cpuoct2020.html",
+        "https://testbnull.medium.com/weblogic-rce-by-only-one-get-request-cve-2020-14882-analysis-6e4b09981dbf"
+      ],
+      "detection": {
+        "path": "/console/css/%252e%252e%252fconsole.portal",
+        "method": "GET",
+        "success_indicators": ["console.portal", "WebLogic"]
+      }
+    },
+    {
+      "id": "VULN-011",
+      "cve": "CVE-2023-21839",
+      "technology": "weblogic",
+      "affected_paths": ["/wls-wsat/CoordinatorPortType", "/_async/AsyncResponseService"],
+      "title": "WebLogic Server Unauth Remote Code Execution",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Oracle WebLogic Server vulnerability allows unauthenticated attacker with network access to compromise the server. Affects T3/IIOP protocols.",
+      "exploitation": "Exploit T3/IIOP protocol deserialization or JNDI injection via crafted request to vulnerable endpoints.",
+      "remediation": "Apply Oracle CPU January 2023. Disable T3/IIOP if not needed.",
+      "references": [
+        "https://www.oracle.com/security-alerts/cpujan2023.html"
+      ],
+      "detection": {
+        "path": "/wls-wsat/CoordinatorPortType",
+        "method": "GET",
+        "success_indicators": ["CoordinatorPortType", "wsdl"]
+      }
+    },
+    {
+      "id": "VULN-012",
+      "cve": "CVE-2024-20931",
+      "technology": "weblogic",
+      "affected_paths": ["/wls-wsat/CoordinatorPortType", "/_async/AsyncResponseService"],
+      "title": "WebLogic Server T3/IIOP RCE (Patch Bypass)",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Bypass of CVE-2023-21839 fix in Oracle WebLogic Server. Allows unauthenticated RCE via T3/IIOP protocols.",
+      "remediation": "Apply Oracle CPU January 2024.",
+      "references": [
+        "https://www.oracle.com/security-alerts/cpujan2024.html"
+      ],
+      "detection": {
+        "path": "/wls-wsat/CoordinatorPortType",
+        "method": "GET",
+        "success_indicators": ["CoordinatorPortType"]
+      }
+    },
+    {
+      "id": "VULN-013",
+      "cve": "CVE-2023-22527",
+      "technology": "atlassian",
+      "affected_paths": ["/template/aui/text-inline.vm", "/rest/tinymce/1/macro/preview"],
+      "title": "Confluence Server Template Injection RCE",
+      "severity": "critical",
+      "cvss": 10.0,
+      "description": "Atlassian Confluence Server template injection vulnerability allows unauthenticated remote code execution. Affects Confluence Data Center and Server 8.0.x through 8.5.3.",
+      "exploitation": "Send crafted OGNL expression via template injection in text-inline.vm endpoint.",
+      "remediation": "Upgrade to Confluence 8.5.4 (LTS) or later.",
+      "references": [
+        "https://confluence.atlassian.com/security/cve-2023-22527-rce-vulnerability-in-confluence-data-center-and-server-1333990257.html"
+      ],
+      "detection": {
+        "path": "/template/aui/text-inline.vm",
+        "method": "GET",
+        "success_indicators": ["200"]
+      }
+    },
+    {
+      "id": "VULN-014",
+      "cve": "CVE-2023-22515",
+      "technology": "atlassian",
+      "affected_paths": ["/setup/setupadministrator.action", "/server-info.action"],
+      "title": "Confluence Broken Access Control - Admin Account Creation",
+      "severity": "critical",
+      "cvss": 10.0,
+      "description": "Critical broken access control vulnerability allowing unauthenticated attackers to create admin accounts on Confluence Data Center and Server instances.",
+      "exploitation": "Access setup endpoints to create new admin account: POST to /setup/setupadministrator.action with admin credentials.",
+      "remediation": "Upgrade to Confluence 8.3.3, 8.4.3, or 8.5.2+.",
+      "references": [
+        "https://confluence.atlassian.com/security/cve-2023-22515-broken-access-control-vulnerability-in-confluence-data-center-and-server-1295682276.html"
+      ],
+      "detection": {
+        "path": "/setup/setupadministrator.action",
+        "method": "GET",
+        "success_indicators": ["setup", "administrator", "200"]
+      }
+    },
+    {
+      "id": "VULN-015",
+      "cve": "CVE-2023-26360",
+      "technology": "coldfusion",
+      "affected_paths": ["/CFIDE/administrator", "/cf_scripts"],
+      "title": "Adobe ColdFusion Deserialization RCE",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Adobe ColdFusion 2018 Update 15 and earlier, ColdFusion 2021 Update 5 and earlier vulnerable to deserialization leading to arbitrary code execution.",
+      "exploitation": "Craft malicious serialized object and send to ColdFusion deserialization endpoint.",
+      "remediation": "Apply Adobe security update APSB23-25.",
+      "references": [
+        "https://helpx.adobe.com/security/products/coldfusion/apsb23-25.html"
+      ],
+      "detection": {
+        "path": "/CFIDE/administrator",
+        "method": "GET",
+        "success_indicators": ["ColdFusion", "Administrator"]
+      }
+    },
+    {
+      "id": "VULN-016",
+      "cve": "CVE-2023-29298",
+      "technology": "coldfusion",
+      "affected_paths": ["/CFIDE/administrator", "/CFIDE/debug"],
+      "title": "Adobe ColdFusion Access Control Bypass",
+      "severity": "high",
+      "cvss": 7.5,
+      "description": "Adobe ColdFusion access control bypass allows unauthenticated access to admin endpoints.",
+      "exploitation": "Use path traversal variants to bypass authentication checks on CFIDE endpoints.",
+      "remediation": "Apply Adobe security update APSB23-40.",
+      "references": [
+        "https://helpx.adobe.com/security/products/coldfusion/apsb23-40.html"
+      ],
+      "detection": {
+        "path": "/CFIDE/administrator",
+        "method": "GET",
+        "success_indicators": ["ColdFusion"]
+      }
+    },
+    {
+      "id": "VULN-017",
+      "cve": "CVE-2023-46589",
+      "technology": "tomcat",
+      "affected_paths": ["/*"],
+      "title": "Apache Tomcat HTTP Request Smuggling",
+      "severity": "high",
+      "cvss": 7.5,
+      "description": "Apache Tomcat 8.5.0 through 8.5.95, 9.0.0-M1 through 9.0.83, 10.1.0-M1 through 10.1.16 did not correctly parse HTTP trailer headers, enabling request smuggling.",
+      "exploitation": "Send crafted HTTP request with malformed trailer headers to smuggle a second request.",
+      "remediation": "Upgrade to Tomcat 8.5.96+, 9.0.84+, or 10.1.17+.",
+      "references": [
+        "https://tomcat.apache.org/security-10.html"
+      ],
+      "detection": {
+        "note": "Detect Tomcat version first, then check if vulnerable version range"
+      }
+    },
+    {
+      "id": "VULN-018",
+      "cve": "CVE-2024-21733",
+      "technology": "tomcat",
+      "affected_paths": ["/*"],
+      "title": "Apache Tomcat Information Disclosure via Incomplete POST",
+      "severity": "medium",
+      "cvss": 5.3,
+      "description": "Apache Tomcat 8.5.7 through 8.5.63, 9.0.0-M11 through 9.0.43 may return previous request body data in response to incomplete POST requests.",
+      "exploitation": "Send incomplete POST request to receive fragments of other users' request bodies.",
+      "remediation": "Upgrade to Tomcat 8.5.64+ or 9.0.44+.",
+      "references": [
+        "https://tomcat.apache.org/security-9.html"
+      ],
+      "detection": {
+        "note": "Detect Tomcat version, check if in vulnerable range"
+      }
+    },
+    {
+      "id": "VULN-019",
+      "cve": "CVE-2021-29441",
+      "technology": "nacos",
+      "affected_paths": ["/nacos/v1/auth/login", "/nacos/v1/cs/configs"],
+      "title": "Nacos Authentication Bypass",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Nacos before 1.4.1 allows authentication bypass via User-Agent header set to 'Nacos-Server'. This enables reading all configurations which often contain database credentials and API keys.",
+      "exploitation": "Add header 'User-Agent: Nacos-Server' to bypass authentication. Then access /nacos/v1/cs/configs to dump all configurations.",
+      "remediation": "Upgrade to Nacos 1.4.1+. Enable authentication. Change default credentials.",
+      "references": [
+        "https://github.com/alibaba/nacos/issues/4593"
+      ],
+      "detection": {
+        "path": "/nacos/v1/cs/configs?search=blur&dataId=&group=&pageNo=1&pageSize=10",
+        "method": "GET",
+        "headers": {"User-Agent": "Nacos-Server"},
+        "success_indicators": ["totalCount", "pageItems"]
+      },
+      "default_credentials": [
+        {"username": "nacos", "password": "nacos"}
+      ]
+    },
+    {
+      "id": "VULN-020",
+      "cve": null,
+      "technology": "xxl_job",
+      "affected_paths": ["/xxl-job-admin", "/xxl-job-admin/toLogin"],
+      "title": "XXL-Job Default Credentials and RCE",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "XXL-Job admin interface often deployed with default credentials. Once authenticated, the task scheduler allows arbitrary command execution via GLUE mode (Groovy/Python/Shell scripts).",
+      "exploitation": "1) Login with default credentials admin/123456. 2) Create new task with GLUE(Shell) mode. 3) Enter command as task script. 4) Trigger task execution.",
+      "remediation": "Change default credentials. Restrict admin access to management network. Disable GLUE script modes if not needed.",
+      "references": [],
+      "detection": {
+        "path": "/xxl-job-admin/toLogin",
+        "method": "GET",
+        "success_indicators": ["XXL-JOB", "login"]
+      },
+      "default_credentials": [
+        {"username": "admin", "password": "123456"}
+      ]
+    },
+    {
+      "id": "VULN-021",
+      "cve": null,
+      "technology": "druid",
+      "affected_paths": ["/druid/index.html", "/druid/sql.html"],
+      "title": "Alibaba Druid Monitor Unauthorized Access",
+      "severity": "high",
+      "cvss": 7.5,
+      "description": "Alibaba Druid connection pool monitor often exposed without authentication, revealing SQL queries, session information, database connection details, and web URIs.",
+      "exploitation": "Access /druid/index.html without authentication. Navigate to SQL monitoring to see all executed SQL queries. Check datasource info for connection strings.",
+      "remediation": "Enable Druid authentication. Restrict access to management network.",
+      "references": [],
+      "detection": {
+        "path": "/druid/index.html",
+        "method": "GET",
+        "success_indicators": ["Druid Stat", "druid monitor"]
+      }
+    },
+    {
+      "id": "VULN-022",
+      "cve": null,
+      "technology": "swagger_api_docs",
+      "affected_paths": ["/swagger-ui.html", "/swagger-ui/", "/v2/api-docs", "/v3/api-docs"],
+      "title": "Swagger/OpenAPI Documentation Exposure",
+      "severity": "medium",
+      "cvss": 5.3,
+      "description": "Exposed Swagger/OpenAPI documentation reveals complete API surface including internal endpoints, parameter types, authentication schemes, and data models.",
+      "exploitation": "Access Swagger UI to enumerate all API endpoints. Use 'Try it out' feature to test endpoints directly. Extract authentication schemes and internal API paths.",
+      "remediation": "Disable Swagger in production. Use @Profile(\"dev\") annotation. Configure springdoc.swagger-ui.enabled=false.",
+      "references": [],
+      "detection": {
+        "path": "/swagger-ui.html",
+        "method": "GET",
+        "success_indicators": ["swagger", "api-docs"]
+      }
+    },
+    {
+      "id": "VULN-023",
+      "cve": null,
+      "technology": "tomcat",
+      "affected_paths": ["/manager/html", "/host-manager/html"],
+      "title": "Tomcat Manager Default/Weak Credentials",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Tomcat Manager with default or weak credentials allows deploying WAR files, leading to full server compromise via webshell upload.",
+      "exploitation": "Access /manager/html with default credentials (tomcat/tomcat, admin/admin, etc). Deploy malicious WAR file containing webshell.",
+      "remediation": "Change default credentials. Restrict manager to localhost. Use RemoteAddrValve.",
+      "references": [],
+      "detection": {
+        "path": "/manager/html",
+        "method": "GET",
+        "success_indicators": ["401", "Tomcat Manager"]
+      },
+      "default_credentials": [
+        {"username": "tomcat", "password": "tomcat"},
+        {"username": "admin", "password": "admin"},
+        {"username": "admin", "password": ""},
+        {"username": "tomcat", "password": "s3cret"},
+        {"username": "admin", "password": "tomcat"},
+        {"username": "manager", "password": "manager"},
+        {"username": "role1", "password": "role1"},
+        {"username": "root", "password": "root"},
+        {"username": "both", "password": "tomcat"}
+      ]
+    },
+    {
+      "id": "VULN-024",
+      "cve": null,
+      "technology": "jboss_wildfly",
+      "affected_paths": ["/invoker/JMXInvokerServlet", "/invoker/EJBInvokerServlet"],
+      "title": "JBoss Invoker Servlet Deserialization RCE",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "JBoss Application Server exposes invoker servlets that accept serialized Java objects, allowing remote code execution via deserialization gadgets.",
+      "exploitation": "Send crafted serialized Java object to /invoker/JMXInvokerServlet using tools like ysoserial.",
+      "remediation": "Remove or restrict invoker servlets. Upgrade to WildFly.",
+      "references": [
+        "https://www.exploit-db.com/exploits/36575"
+      ],
+      "detection": {
+        "path": "/invoker/JMXInvokerServlet",
+        "method": "GET",
+        "success_indicators": ["200", "application/x-java-serialized-object"]
+      }
+    },
+    {
+      "id": "VULN-025",
+      "cve": null,
+      "technology": "jenkins",
+      "affected_paths": ["/script"],
+      "title": "Jenkins Script Console Unauthenticated Access",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Jenkins Script Console allows executing arbitrary Groovy scripts on the server. If accessible without authentication, it provides full RCE.",
+      "exploitation": "Access /script and execute Groovy: 'cmd'.execute().text or new ProcessBuilder(['sh','-c','id']).start().text",
+      "remediation": "Enable authentication. Restrict Script Console to admin role. Enable CSRF protection.",
+      "references": [],
+      "detection": {
+        "path": "/script",
+        "method": "GET",
+        "success_indicators": ["Script Console", "Groovy script"]
+      }
+    },
+    {
+      "id": "VULN-026",
+      "cve": null,
+      "technology": "elasticsearch",
+      "affected_paths": ["/_search", "/_cat/indices", "/_cluster/settings"],
+      "title": "Elasticsearch Unauthenticated Access",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Elasticsearch instances without authentication expose all indexed data, cluster configuration, and potentially allow data modification or deletion.",
+      "exploitation": "Access /_cat/indices to list all indices. Use /_search?q=* to dump data. Check /_cluster/settings for sensitive configuration.",
+      "remediation": "Enable X-Pack Security. Configure authentication. Restrict network access.",
+      "references": [],
+      "detection": {
+        "path": "/",
+        "method": "GET",
+        "success_indicators": ["cluster_name", "cluster_uuid", "version"]
+      }
+    },
+    {
+      "id": "VULN-027",
+      "cve": "CVE-2023-50386",
+      "technology": "solr",
+      "affected_paths": ["/solr/admin/cores"],
+      "title": "Apache Solr Remote Code Execution via ConfigSet",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Apache Solr before 9.4.1 allows RCE through backup/restore APIs used for ConfigSet manipulation.",
+      "exploitation": "Upload malicious ConfigSet containing Java code, then trigger execution via core creation.",
+      "remediation": "Upgrade to Solr 9.4.1+. Enable authentication.",
+      "references": [
+        "https://solr.apache.org/security.html"
+      ],
+      "detection": {
+        "path": "/solr/admin/cores?action=STATUS",
+        "method": "GET",
+        "success_indicators": ["responseHeader", "status"]
+      }
+    },
+    {
+      "id": "VULN-028",
+      "cve": null,
+      "technology": "spring_boot_actuator",
+      "affected_paths": ["/actuator/httptrace", "/trace"],
+      "title": "Spring Boot Actuator HTTP Trace - Request Data Exposure",
+      "severity": "high",
+      "cvss": 7.5,
+      "description": "Exposed httptrace/trace endpoint reveals recent HTTP requests and responses including headers, cookies, session tokens, and authentication credentials.",
+      "exploitation": "GET /actuator/httptrace to view recent requests. Extract Authorization headers, session cookies, and other sensitive data from traced requests.",
+      "remediation": "Disable httptrace endpoint. Remove from exposure list.",
+      "references": [],
+      "detection": {
+        "path": "/actuator/httptrace",
+        "method": "GET",
+        "success_indicators": ["traces", "request", "response", "headers"]
+      }
+    },
+    {
+      "id": "VULN-029",
+      "cve": null,
+      "technology": "spring_boot_actuator",
+      "affected_paths": ["/actuator/loggers"],
+      "title": "Spring Boot Actuator Logger Level Manipulation",
+      "severity": "medium",
+      "cvss": 6.5,
+      "description": "Exposed loggers endpoint allows changing log levels at runtime. Can be used to enable debug logging to expose sensitive information or to suppress security audit logs.",
+      "exploitation": "POST /actuator/loggers/ROOT with {\"configuredLevel\":\"DEBUG\"} to enable debug logging across the application.",
+      "remediation": "Protect loggers endpoint with authentication. Restrict to read-only access.",
+      "references": [],
+      "detection": {
+        "path": "/actuator/loggers",
+        "method": "GET",
+        "success_indicators": ["levels", "loggers", "configuredLevel"]
+      }
+    },
+    {
+      "id": "VULN-030",
+      "cve": null,
+      "technology": "liferay",
+      "affected_paths": ["/api/jsonws", "/api/jsonws/invoke"],
+      "title": "Liferay JSONWS Unauthenticated API Access",
+      "severity": "critical",
+      "cvss": 9.1,
+      "description": "Liferay's JSON Web Services API, if exposed without proper authentication, allows enumeration and invocation of internal service methods including user management, file operations, and system configuration.",
+      "exploitation": "Access /api/jsonws to discover available services. Invoke methods like /api/jsonws/invoke with service method paths for user enumeration, data access, or SSRF.",
+      "remediation": "Configure jsonws.web.services.security in portal-ext.properties. Restrict API access by role.",
+      "references": [
+        "https://help.liferay.com/hc/en-us/articles/360017895212-Understanding-the-Security-Best-Practices-for-Liferay"
+      ],
+      "detection": {
+        "path": "/api/jsonws",
+        "method": "GET",
+        "success_indicators": ["jsonws", "services", "methods"]
+      }
+    },
+    {
+      "id": "VULN-031",
+      "cve": null,
+      "technology": "generic",
+      "affected_paths": ["/h2-console", "/h2-console/"],
+      "title": "H2 Database Console Exposure - RCE",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "H2 Database web console allows executing arbitrary SQL and Java code. Often exposed in Spring Boot applications during development.",
+      "exploitation": "Access /h2-console. Use JDBC URL jdbc:h2:mem:testdb or similar. Execute CALL SHELLEXEC('command') or use CREATE ALIAS for Java code execution.",
+      "remediation": "Disable H2 console in production (spring.h2.console.enabled=false). Never expose to external network.",
+      "references": [],
+      "detection": {
+        "path": "/h2-console",
+        "method": "GET",
+        "success_indicators": ["H2 Console", "JDBC URL"]
+      }
+    },
+    {
+      "id": "VULN-032",
+      "cve": null,
+      "technology": "generic",
+      "affected_paths": ["/graphiql", "/graphql/console"],
+      "title": "GraphiQL/GraphQL Console Exposure",
+      "severity": "high",
+      "cvss": 7.5,
+      "description": "Exposed GraphiQL IDE allows interactive query construction and execution against the GraphQL API, enabling schema introspection and data exfiltration.",
+      "exploitation": "Use introspection query to discover full schema: {__schema{types{name,fields{name,type{name}}}}}. Then construct queries to extract data.",
+      "remediation": "Disable GraphiQL in production. Disable introspection. Implement proper authorization on resolvers.",
+      "references": [],
+      "detection": {
+        "path": "/graphiql",
+        "method": "GET",
+        "success_indicators": ["GraphiQL", "graphql"]
+      }
+    },
+    {
+      "id": "VULN-033",
+      "cve": null,
+      "technology": "spring_boot_actuator",
+      "affected_paths": ["/actuator/shutdown"],
+      "title": "Spring Boot Actuator Shutdown - Denial of Service",
+      "severity": "critical",
+      "cvss": 7.5,
+      "description": "Exposed shutdown endpoint allows unauthenticated users to shut down the application via POST request.",
+      "exploitation": "POST /actuator/shutdown to gracefully shut down the application.",
+      "remediation": "Never expose shutdown endpoint. Ensure management.endpoint.shutdown.enabled=false.",
+      "references": [],
+      "detection": {
+        "path": "/actuator/shutdown",
+        "method": "GET",
+        "note": "GET will return 405 Method Not Allowed if endpoint exists. Do NOT send POST to avoid disruption."
+      }
+    },
+    {
+      "id": "VULN-034",
+      "cve": "CVE-2024-52316",
+      "technology": "tomcat",
+      "affected_paths": ["/*"],
+      "title": "Apache Tomcat Authentication Bypass via Jakarta Authentication",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Apache Tomcat with Jakarta Authentication (JASPIC) ServerAuthContext implementations that may throw exceptions during authentication process, leading to authentication bypass.",
+      "exploitation": "Trigger exception during authentication to bypass access controls.",
+      "remediation": "Upgrade to Tomcat 11.0.1+, 10.1.33+, or 9.0.97+.",
+      "references": [
+        "https://tomcat.apache.org/security-11.html"
+      ],
+      "detection": {
+        "note": "Detect Tomcat version range"
+      }
+    },
+    {
+      "id": "VULN-035",
+      "cve": null,
+      "technology": "spring_boot_actuator",
+      "affected_paths": ["/actuator/sessions"],
+      "title": "Spring Boot Actuator Session Manipulation",
+      "severity": "high",
+      "cvss": 8.0,
+      "description": "Exposed sessions endpoint allows listing and deleting user sessions, enabling session hijacking or forced logout attacks.",
+      "exploitation": "GET /actuator/sessions?username=admin to find admin sessions. Use session IDs for hijacking.",
+      "remediation": "Do not expose sessions endpoint. Protect with strong authentication.",
+      "references": [],
+      "detection": {
+        "path": "/actuator/sessions",
+        "method": "GET",
+        "success_indicators": ["sessions", "sessionId"]
+      }
+    },
+    {
+      "id": "VULN-036",
+      "cve": "CVE-2024-21006",
+      "technology": "weblogic",
+      "affected_paths": ["/*"],
+      "title": "WebLogic Server Remote Code Execution",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Oracle WebLogic Server vulnerability allows unauthenticated attacker with network access via T3/IIOP to compromise the server.",
+      "remediation": "Apply Oracle CPU April 2024.",
+      "references": [
+        "https://www.oracle.com/security-alerts/cpuapr2024.html"
+      ],
+      "detection": {
+        "note": "Detect WebLogic presence and version"
+      }
+    },
+    {
+      "id": "VULN-037",
+      "cve": null,
+      "technology": "spring_cloud",
+      "affected_paths": ["/eureka", "/eureka/apps"],
+      "title": "Eureka Service Registry Exposure",
+      "severity": "high",
+      "cvss": 7.5,
+      "description": "Exposed Eureka service registry reveals all registered microservices with their internal IPs, ports, health check URLs, and metadata.",
+      "exploitation": "GET /eureka/apps to list all registered services. Extract internal hostnames and ports for further targeting.",
+      "remediation": "Restrict Eureka dashboard to management network. Enable authentication.",
+      "references": [],
+      "detection": {
+        "path": "/eureka/apps",
+        "method": "GET",
+        "success_indicators": ["applications", "instance", "hostName"]
+      }
+    },
+    {
+      "id": "VULN-038",
+      "cve": "CVE-2024-23897",
+      "technology": "jenkins",
+      "affected_paths": ["/cli"],
+      "title": "Jenkins CLI Arbitrary File Read",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Jenkins <= 2.441 (LTS <= 2.426.2) uses args4j expandAtFiles feature that replaces @filename arguments with file contents. Unauthenticated attackers can read arbitrary files including master.key and credentials.xml.",
+      "exploitation": "Send CLI command with @/etc/passwd or @/var/jenkins_home/secrets/master.key argument. File contents returned in error messages.",
+      "remediation": "Upgrade to Jenkins 2.442+ or LTS 2.426.3+. Disable CLI if not needed.",
+      "references": ["https://www.jenkins.io/security/advisory/2024-01-24/"],
+      "detection": {
+        "path": "/cli",
+        "method": "GET",
+        "success_indicators": ["CLI", "jenkins"]
+      }
+    },
+    {
+      "id": "VULN-039",
+      "cve": "CVE-2024-53677",
+      "technology": "struts",
+      "affected_paths": ["/*.action"],
+      "title": "Apache Struts File Upload Path Traversal RCE (CVE-2023-50164 bypass)",
+      "severity": "critical",
+      "cvss": 9.5,
+      "description": "Incomplete fix for CVE-2023-50164. Struts 2.0.0-2.5.33 and 6.0.0-6.4.0 remain vulnerable to file upload path traversal allowing arbitrary file write and RCE.",
+      "exploitation": "Manipulate upload parameters in multipart requests to bypass updated path traversal protections.",
+      "remediation": "Migrate to new FileUploadInterceptor. Upgrade to Struts 6.4.0+.",
+      "references": ["https://cwiki.apache.org/confluence/display/WW/S2-067"],
+      "detection": {
+        "path": "/*.action",
+        "method": "GET",
+        "note": "Requires Struts presence and file upload functionality"
+      }
+    },
+    {
+      "id": "VULN-040",
+      "cve": "CVE-2024-50379",
+      "technology": "tomcat",
+      "affected_paths": ["/*"],
+      "title": "Apache Tomcat TOCTOU Race Condition RCE",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Tomcat 11.0.0-M1 to 11.0.1, 10.1.0-M1 to 10.1.33, 9.0.0.M1 to 9.0.97 vulnerable to TOCTOU race condition during JSP compilation on case-insensitive file systems (Windows/macOS) allowing RCE.",
+      "exploitation": "Upload file with mixed-case JSP extension (.Jsp) that bypasses servlet mapping, race JSP compiler to compile and execute it.",
+      "remediation": "Upgrade to Tomcat 11.0.2+, 10.1.34+, or 9.0.98+.",
+      "references": ["https://tomcat.apache.org/security-11.html"],
+      "detection": {
+        "note": "Detect Tomcat version and OS (Windows/macOS)"
+      }
+    },
+    {
+      "id": "VULN-041",
+      "cve": "CVE-2025-24813",
+      "technology": "tomcat",
+      "affected_paths": ["/*"],
+      "title": "Apache Tomcat Partial PUT Deserialization RCE",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Tomcat 11.0.0-M1 to 11.0.2, 10.1.0-M1 to 10.1.34, 9.0.0-M1 to 9.0.98 with write-enabled default servlet and file-based session persistence allow RCE via deserialization of PUT content.",
+      "exploitation": "PUT serialized Java payload to .session file location. Send request referencing that session ID to trigger deserialization.",
+      "remediation": "Upgrade to Tomcat 11.0.3+, 10.1.35+, or 9.0.99+. Keep default servlet readonly=true.",
+      "references": ["https://tomcat.apache.org/security-11.html"],
+      "detection": {
+        "note": "Detect Tomcat version, check if PUT is enabled"
+      }
+    },
+    {
+      "id": "VULN-042",
+      "cve": "CVE-2023-22518",
+      "technology": "atlassian",
+      "affected_paths": ["/json/setup-restore.action", "/json/setup-restore-local.action", "/json/setup-restore-progress.action"],
+      "title": "Confluence Improper Authorization - Backup Restore Takeover",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Unauthenticated attacker can restore a crafted Confluence backup containing a known admin account, taking over the instance. Used by ransomware groups.",
+      "exploitation": "POST crafted backup ZIP to /json/setup-restore.action without authentication. Log in with known admin credentials from the backup.",
+      "remediation": "Upgrade to Confluence 7.19.16+, 8.3.4+, 8.4.4+, 8.5.3+, or 8.6.1+.",
+      "references": ["https://confluence.atlassian.com/security/cve-2023-22518-improper-authorization-vulnerability-in-confluence-data-center-and-server-1311473907.html"],
+      "detection": {
+        "path": "/json/setup-restore.action",
+        "method": "GET",
+        "success_indicators": ["200"]
+      }
+    },
+    {
+      "id": "VULN-043",
+      "cve": "CVE-2023-50291",
+      "technology": "solr",
+      "affected_paths": ["/solr/admin/info/properties", "/solr/admin/info/system"],
+      "title": "Apache Solr Environment Variable Disclosure",
+      "severity": "high",
+      "cvss": 7.5,
+      "description": "Solr 6.0.0 before 8.11.3 and 9.0.0 before 9.3.0 expose system properties and environment variables including credentials through admin info endpoints without authentication.",
+      "exploitation": "GET /solr/admin/info/properties or /solr/admin/info/system to read environment variables and Java system properties.",
+      "remediation": "Upgrade to Solr 8.11.3+ or 9.3.0+. Enable authentication.",
+      "references": ["https://solr.apache.org/security.html"],
+      "detection": {
+        "path": "/solr/admin/info/properties",
+        "method": "GET",
+        "success_indicators": ["java.version", "system.properties"]
+      }
+    },
+    {
+      "id": "VULN-044",
+      "cve": "CVE-2020-7961",
+      "technology": "liferay",
+      "affected_paths": ["/api/jsonws/invoke", "/api/jsonws"],
+      "title": "Liferay Portal JSONWS Deserialization RCE",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Liferay Portal < 7.2.1 CE GA2 deserializes user-supplied data via JSONWS API without validation. Unauthenticated RCE via crafted JSON payload.",
+      "exploitation": "POST to /api/jsonws/invoke with serialized Java object payload (ysoserial gadget chains).",
+      "remediation": "Upgrade to Liferay 7.2.1 CE GA2+. Restrict JSONWS access.",
+      "references": ["https://portal.liferay.dev/2020/03/06/ce-ga6-deserialization"],
+      "detection": {
+        "path": "/api/jsonws",
+        "method": "GET",
+        "success_indicators": ["jsonws", "services"]
+      }
+    },
+    {
+      "id": "VULN-045",
+      "cve": null,
+      "technology": "nacos",
+      "affected_paths": ["/nacos/v1/auth/users/login", "/nacos/v1/cs/configs"],
+      "title": "Nacos Default JWT Secret Key Token Forgery",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Nacos 0.1.0-2.2.0 uses a hardcoded default JWT secret key for token signing. Anyone can forge valid admin JWT tokens if the key is not changed.",
+      "exploitation": "Generate JWT with {sub:nacos} signed with default key 'SecretKey012345678901234567890123456789012345678901234567890123456789'. Use as Bearer token for full admin access.",
+      "remediation": "Change nacos.core.auth.plugin.nacos.token.secret.key to a unique value.",
+      "references": [],
+      "detection": {
+        "path": "/nacos/v1/auth/users/login",
+        "method": "POST",
+        "note": "Attempt login with forged JWT token"
+      }
+    },
+    {
+      "id": "VULN-046",
+      "cve": "CVE-2023-38205",
+      "technology": "coldfusion",
+      "affected_paths": ["/CFIDE/administrator", "/CFIDE/adminapi"],
+      "title": "Adobe ColdFusion Access Control Bypass (CVE-2023-29298 patch bypass)",
+      "severity": "high",
+      "cvss": 7.5,
+      "description": "Incomplete fix for CVE-2023-29298. Additional path manipulation techniques bypass the updated access controls to reach ColdFusion admin endpoints.",
+      "exploitation": "Use modified path traversal payloads that bypass the updated path normalization. Often chained with CVE-2023-26360 for RCE.",
+      "remediation": "Apply Adobe security update APSB23-47.",
+      "references": ["https://helpx.adobe.com/security/products/coldfusion/apsb23-47.html"],
+      "detection": {
+        "path": "/CFIDE/administrator",
+        "method": "GET",
+        "success_indicators": ["ColdFusion"]
+      }
+    },
+    {
+      "id": "VULN-047",
+      "cve": "CVE-2019-16891",
+      "technology": "liferay",
+      "affected_paths": ["/c/portal/portlet_url", "/api/jsonws/invoke"],
+      "title": "Liferay Portal JSON Deserialization RCE (PortletURLAction)",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Liferay Portal 7.1.0 and earlier deserializes user-supplied JSON via JSONFactoryImpl and BeanSerializer, allowing RCE through setter method invocation with C3P0 gadget chains.",
+      "exploitation": "POST to /c/portal/portlet_url with crafted JSON payload containing C3P0 PoolBackedDataSource → WrapperConnectionPoolDataSource → userOverridesAsString with hex-encoded serialized object. WAF bypass: /c;/portal/portlet_url",
+      "remediation": "Upgrade to Liferay 7.1 CE GA2 (7.1.1+) or later.",
+      "references": [
+        "https://l0gg.substack.com/p/journey-into-apple-liferay-rce",
+        "https://portal.liferay.dev/2020/03/06/ce-ga6-deserialization"
+      ],
+      "detection": {
+        "path": "/c/portal/portlet_url",
+        "method": "GET",
+        "success_indicators": ["200", "portlet"]
+      }
+    },
+    {
+      "id": "VULN-048",
+      "cve": "CVE-2016-4437",
+      "technology": "shiro",
+      "affected_paths": ["/*"],
+      "title": "Apache Shiro RememberMe Cookie Deserialization RCE",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Apache Shiro < 1.2.5 uses a hardcoded AES key to encrypt rememberMe cookies. Attackers can forge cookies containing serialized Java objects for RCE. Later versions (CVE-2019-12422) vulnerable to padding oracle attacks.",
+      "exploitation": "1) Detect Shiro via rememberMe=deleteMe in Set-Cookie response. 2) Generate payload with ysoserial. 3) AES-CBC encrypt with default key 'kPH+bIxk5D2deZiIxcaaaA==' (Base64). 4) Send as rememberMe cookie value.",
+      "remediation": "Upgrade to Shiro 1.2.5+. Configure custom cipher key. Consider upgrading to 1.10+ for latest fixes.",
+      "references": [
+        "https://issues.apache.org/jira/browse/SHIRO-550"
+      ],
+      "detection": {
+        "path": "/*",
+        "method": "GET",
+        "note": "Detect via Set-Cookie: rememberMe=deleteMe in response headers after invalid cookie"
+      }
+    },
+    {
+      "id": "VULN-049",
+      "cve": "CVE-2023-49070",
+      "technology": "ofbiz",
+      "affected_paths": ["/webtools/control/xmlrpc"],
+      "title": "Apache OFBiz Pre-Auth RCE via XML-RPC Deserialization",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Apache OFBiz < 18.12.10 includes deprecated XML-RPC library that accepts unauthenticated Java serialized objects, allowing pre-auth RCE.",
+      "exploitation": "POST serialized Java payload (ysoserial gadget chain) to /webtools/control/xmlrpc endpoint without authentication.",
+      "remediation": "Upgrade to OFBiz 18.12.10+ (XML-RPC removed).",
+      "references": [
+        "https://ofbiz.apache.org/security.html",
+        "https://letsdefend.io/blog/exploitation-analysis-of-apache-ofbiz-zero-day-vulnerabilities-cve-2023-49070-cve-2023-51467"
+      ],
+      "detection": {
+        "path": "/webtools/control/xmlrpc",
+        "method": "POST",
+        "success_indicators": ["200", "xml-rpc"]
+      }
+    },
+    {
+      "id": "VULN-050",
+      "cve": "CVE-2023-51467",
+      "technology": "ofbiz",
+      "affected_paths": ["/webtools/control/ping", "/webtools/control/ProgramExport"],
+      "title": "Apache OFBiz Pre-Auth RCE via Authentication Bypass",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Incomplete fix for CVE-2023-49070. OFBiz < 18.12.11 allows authentication bypass via requirePasswordChange=Y parameter, combined with Groovy expression injection via ProgramExport for RCE.",
+      "exploitation": "1) Bypass auth: GET /webtools/control/ping?USERNAME=&PASSWORD=Y&requirePasswordChange=Y (returns success). 2) Chain with /webtools/control/ProgramExport for Groovy code execution.",
+      "remediation": "Upgrade to OFBiz 18.12.11+.",
+      "references": [
+        "https://ofbiz.apache.org/security.html"
+      ],
+      "detection": {
+        "path": "/webtools/control/ping?USERNAME=&PASSWORD=Y&requirePasswordChange=Y",
+        "method": "GET",
+        "success_indicators": ["PONG", "200"]
+      }
+    },
+    {
+      "id": "VULN-051",
+      "cve": "CVE-2023-46604",
+      "technology": "activemq",
+      "affected_paths": ["/admin/"],
+      "title": "Apache ActiveMQ OpenWire Protocol RCE",
+      "severity": "critical",
+      "cvss": 10.0,
+      "description": "ActiveMQ < 5.15.16, 5.16.7, 5.17.6, 5.18.3 vulnerable to RCE via ClassPathXmlApplicationContext deserialization in OpenWire protocol (port 61616). Actively exploited by ransomware groups.",
+      "exploitation": "Send crafted OpenWire EXCEPTION_RESPONSE packet to port 61616 containing malicious ClassPathXmlApplicationContext pointing to attacker-hosted Spring XML config with ProcessBuilder exec.",
+      "remediation": "Upgrade to ActiveMQ 5.15.16+, 5.16.7+, 5.17.6+, or 5.18.3+.",
+      "references": [
+        "https://activemq.apache.org/security-advisories",
+        "https://www.huntress.com/blog/critical-vulnerability-exploitation-of-apache-activemq-cve-2023-46604"
+      ],
+      "detection": {
+        "path": "/admin/",
+        "method": "GET",
+        "success_indicators": ["ActiveMQ", "Web Console"],
+        "note": "Actual vuln is on port 61616 (OpenWire), web console helps identify ActiveMQ presence"
+      }
+    },
+    {
+      "id": "VULN-052",
+      "cve": "CVE-2020-17518",
+      "technology": "flink",
+      "affected_paths": ["/jars/upload"],
+      "title": "Apache Flink File Upload Path Traversal",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Apache Flink 1.5.1-1.11.2 allows uploading files to arbitrary filesystem locations via directory traversal in the /jars/upload endpoint.",
+      "exploitation": "POST multipart file to /jars/upload with path traversal in filename like ../../tmp/malicious.jar",
+      "remediation": "Upgrade to Flink 1.11.3+ or 1.12.0+.",
+      "references": [
+        "https://flink.apache.org/2021/01/05/flink-1.11.3-released.html"
+      ],
+      "detection": {
+        "path": "/jars/upload",
+        "method": "GET",
+        "success_indicators": ["405", "upload"]
+      }
+    },
+    {
+      "id": "VULN-053",
+      "cve": null,
+      "technology": "hadoop_yarn",
+      "affected_paths": ["/ws/v1/cluster/apps/new-application", "/ws/v1/cluster/apps"],
+      "title": "Hadoop YARN ResourceManager Unauthenticated RCE",
+      "severity": "critical",
+      "cvss": 10.0,
+      "description": "Hadoop YARN ResourceManager with default configuration (Simple authentication) allows unauthenticated users to submit applications, enabling arbitrary command execution on cluster nodes.",
+      "exploitation": "1) POST /ws/v1/cluster/apps/new-application to get app ID. 2) POST /ws/v1/cluster/apps with malicious application spec containing command payload in the launch container.",
+      "remediation": "Enable Kerberos authentication. Set hadoop.security.authentication=kerberos. Restrict ResourceManager web UI access.",
+      "references": [
+        "https://www.exploit-db.com/exploits/45025"
+      ],
+      "detection": {
+        "path": "/ws/v1/cluster/apps/new-application",
+        "method": "POST",
+        "success_indicators": ["application-id"]
+      }
+    },
+    {
+      "id": "VULN-054",
+      "cve": "CVE-2022-33891",
+      "technology": "spark",
+      "affected_paths": ["/*"],
+      "title": "Apache Spark Web UI Command Injection via doAs",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Apache Spark UI with ACLs enabled allows command injection via the doAs parameter. The HttpSecurityFilter uses Unix id command to check user permissions, enabling shell injection.",
+      "exploitation": "Send GET request with ?doAs=`malicious_command` to inject commands into shell execution via the Unix id command.",
+      "remediation": "Upgrade to Spark 3.1.3+, 3.2.2+, or 3.3.0+.",
+      "references": [
+        "https://spark.apache.org/security.html"
+      ],
+      "detection": {
+        "path": "/",
+        "method": "GET",
+        "success_indicators": ["Spark", "Master", "Workers"],
+        "note": "Detect Spark UI presence first"
+      }
+    },
+    {
+      "id": "VULN-055",
+      "cve": "CVE-2024-4956",
+      "technology": "nexus",
+      "affected_paths": ["/", "/service/rest/"],
+      "title": "Sonatype Nexus Repository Path Traversal (Unauthenticated File Read)",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Nexus Repository 3.x < 3.68.1 allows unauthenticated path traversal to read arbitrary files including system files outside the Nexus installation directory.",
+      "exploitation": "Craft URL with encoded traversal sequences to download arbitrary files without authentication.",
+      "remediation": "Upgrade to Nexus Repository 3.68.1+.",
+      "references": [
+        "https://support.sonatype.com/hc/en-us/articles/29416509323923"
+      ],
+      "detection": {
+        "path": "/service/rest/v1/status",
+        "method": "GET",
+        "success_indicators": ["Nexus"]
+      }
+    },
+    {
+      "id": "VULN-056",
+      "cve": "CVE-2024-3656",
+      "technology": "keycloak",
+      "affected_paths": ["/auth/admin/", "/admin/"],
+      "title": "Keycloak Unguarded Admin REST API Endpoints",
+      "severity": "critical",
+      "cvss": 9.8,
+      "description": "Keycloak < 24.0.5 exposes admin REST API endpoints without proper authorization checks, allowing low-privilege users to perform administrative actions.",
+      "exploitation": "Access admin REST endpoints like /auth/admin/realms/{realm}/users or /auth/admin/realms/{realm}/testLDAPConnection with a low-privilege token.",
+      "remediation": "Upgrade to Keycloak 24.0.5+.",
+      "references": [
+        "https://www.cve.org/CVERecord?id=CVE-2024-3656"
+      ],
+      "detection": {
+        "path": "/auth/admin/",
+        "method": "GET",
+        "success_indicators": ["Keycloak", "admin"]
+      }
+    }
+  ],
+
+  "default_credentials": {
+    "tomcat_manager": [
+      {"username": "tomcat", "password": "tomcat"},
+      {"username": "admin", "password": "admin"},
+      {"username": "admin", "password": ""},
+      {"username": "admin", "password": "tomcat"},
+      {"username": "tomcat", "password": "s3cret"},
+      {"username": "manager", "password": "manager"},
+      {"username": "role1", "password": "role1"},
+      {"username": "root", "password": "root"},
+      {"username": "both", "password": "tomcat"}
+    ],
+    "jboss": [
+      {"username": "admin", "password": "admin"},
+      {"username": "admin", "password": "jboss"},
+      {"username": "jboss", "password": "jboss"}
+    ],
+    "jenkins": [
+      {"username": "admin", "password": "admin"},
+      {"username": "admin", "password": "password"},
+      {"username": "admin", "password": "jenkins"}
+    ],
+    "weblogic": [
+      {"username": "weblogic", "password": "weblogic"},
+      {"username": "weblogic", "password": "weblogic1"},
+      {"username": "weblogic", "password": "welcome1"},
+      {"username": "system", "password": "manager"},
+      {"username": "operator", "password": "password"}
+    ],
+    "nacos": [
+      {"username": "nacos", "password": "nacos"}
+    ],
+    "xxl_job": [
+      {"username": "admin", "password": "123456"}
+    ],
+    "glassfish": [
+      {"username": "admin", "password": "admin"},
+      {"username": "admin", "password": "adminadmin"},
+      {"username": "admin", "password": ""}
+    ],
+    "elasticsearch": [
+      {"username": "elastic", "password": "changeme"},
+      {"username": "elastic", "password": "elastic"}
+    ],
+    "solr": [
+      {"username": "solr", "password": "SolrRocks"}
+    ],
+    "activemq": [
+      {"username": "admin", "password": "admin"},
+      {"username": "user", "password": "user"}
+    ],
+    "ofbiz": [
+      {"username": "admin", "password": "ofbiz"}
+    ],
+    "nexus": [
+      {"username": "admin", "password": "admin123"},
+      {"username": "admin", "password": "nexus"}
+    ],
+    "keycloak": [
+      {"username": "admin", "password": "admin"}
+    ],
+    "flink": [],
+    "hadoop_yarn": [],
+    "spark": []
+  }
+}

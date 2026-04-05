@@ -1,0 +1,759 @@
+# Technology Stack Fingerprinting Rules
+# Used to detect what Java technologies a target is running
+# This enables targeted path scanning instead of brute-forcing everything
+
+headers:
+  server:
+    - pattern: "Apache-Coyote"
+      technology: "tomcat"
+      confidence: "high"
+    - pattern: "Apache/Coyote"
+      technology: "tomcat"
+      confidence: "high"
+    - pattern: "Apache Tomcat"
+      technology: "tomcat"
+      confidence: "high"
+    - pattern: "Jetty"
+      technology: "jetty"
+      confidence: "high"
+    - pattern: "GlassFish"
+      technology: "glassfish"
+      confidence: "high"
+    - pattern: "Oracle-Application-Server"
+      technology: "weblogic"
+      confidence: "high"
+    - pattern: "WebLogic"
+      technology: "weblogic"
+      confidence: "high"
+    - pattern: "JBoss"
+      technology: "jboss_wildfly"
+      confidence: "high"
+    - pattern: "WildFly"
+      technology: "jboss_wildfly"
+      confidence: "high"
+    - pattern: "Undertow"
+      technology: "jboss_wildfly"
+      confidence: "medium"
+    - pattern: "ColdFusion"
+      technology: "coldfusion"
+      confidence: "high"
+    - pattern: "Jenkins"
+      technology: "jenkins"
+      confidence: "high"
+    - pattern: "Resin"
+      technology: "resin"
+      confidence: "high"
+    - pattern: "Liferay"
+      technology: "liferay"
+      confidence: "high"
+
+  x-powered-by:
+    - pattern: "Servlet"
+      technology: "java_generic"
+      confidence: "high"
+    - pattern: "JSP"
+      technology: "java_generic"
+      confidence: "high"
+    - pattern: "JSF"
+      technology: "java_generic"
+      confidence: "medium"
+    - pattern: "Express"
+      technology: "nodejs"
+      confidence: "high"
+      exclude: true
+    - pattern: "PHP"
+      technology: "php"
+      confidence: "high"
+      exclude: true
+    - pattern: "ASP.NET"
+      technology: "aspnet"
+      confidence: "high"
+      exclude: true
+
+  x-application-context:
+    - pattern: ".*"
+      technology: "spring_boot_actuator"
+      confidence: "high"
+      notes: "This header is Spring Boot specific (removed in newer versions)"
+
+  x-b3-traceid:
+    - pattern: ".*"
+      technology: "spring_cloud"
+      confidence: "medium"
+      notes: "Spring Cloud Sleuth distributed tracing"
+
+  www-authenticate:
+    - pattern: "Basic realm=\"Spring\""
+      technology: "spring_boot_actuator"
+      confidence: "medium"
+    - pattern: "Basic realm=\"Tomcat Manager\""
+      technology: "tomcat"
+      confidence: "high"
+
+  x-jenkins:
+    - pattern: ".*"
+      technology: "jenkins"
+      confidence: "high"
+
+  x-hudson:
+    - pattern: ".*"
+      technology: "jenkins"
+      confidence: "high"
+
+  x-instance-identity:
+    - pattern: ".*"
+      technology: "jenkins"
+      confidence: "high"
+
+  liferay-portal:
+    - pattern: ".*"
+      technology: "liferay"
+      confidence: "high"
+
+  x-liferay-portal-type:
+    - pattern: ".*"
+      technology: "liferay"
+      confidence: "high"
+
+  x-content-type-options:
+    - pattern: "nosniff"
+      technology: "java_generic"
+      confidence: "low"
+      notes: "Common but not Java-specific"
+
+cookies:
+  - name: "JSESSIONID"
+    technology: "java_generic"
+    confidence: "high"
+    notes: "Standard Java Servlet session cookie"
+
+  - name: "XSRF-TOKEN"
+    technology: "spring_boot_actuator"
+    confidence: "medium"
+    notes: "Common in Spring Security"
+
+  - name: "CSRF-TOKEN"
+    technology: "spring_boot_actuator"
+    confidence: "low"
+
+  - name: "COMPANY_ID"
+    technology: "liferay"
+    confidence: "high"
+    notes: "Liferay Portal company ID cookie"
+
+  - name: "GUEST_LANGUAGE_ID"
+    technology: "liferay"
+    confidence: "high"
+    notes: "Liferay language cookie"
+
+  - name: "LFR_SESSION_STATE"
+    technology: "liferay"
+    confidence: "high"
+
+  - name: "COOKIE_SUPPORT"
+    technology: "liferay"
+    confidence: "medium"
+
+  - name: "atlassian.xsrf.token"
+    technology: "atlassian"
+    confidence: "high"
+
+  - name: "crowd.token_key"
+    technology: "atlassian"
+    confidence: "high"
+
+  - name: "seraph.rememberme.cookie"
+    technology: "atlassian"
+    confidence: "high"
+
+  - name: "ROUTEID"
+    technology: "tomcat"
+    confidence: "medium"
+    notes: "Tomcat load balancing"
+
+  - name: "jenkins.timestamper.offset"
+    technology: "jenkins"
+    confidence: "high"
+
+  - name: "rememberMe"
+    technology: "shiro"
+    confidence: "high"
+    notes: "Apache Shiro rememberMe cookie - check for deleteMe value indicating Shiro auth"
+
+  - name: "KEYCLOAK_SESSION"
+    technology: "keycloak"
+    confidence: "high"
+
+  - name: "KEYCLOAK_IDENTITY"
+    technology: "keycloak"
+    confidence: "high"
+
+  - name: "NXSESSIONID"
+    technology: "nexus"
+    confidence: "high"
+    notes: "Sonatype Nexus session cookie"
+
+error_pages:
+  - pattern: "Apache Tomcat"
+    technology: "tomcat"
+    confidence: "high"
+    notes: "Default Tomcat error page"
+
+  - pattern: "Whitelabel Error Page"
+    technology: "spring_boot_actuator"
+    confidence: "high"
+    notes: "Spring Boot default error page"
+
+  - pattern: "There was an unexpected error"
+    technology: "spring_boot_actuator"
+    confidence: "medium"
+
+  - pattern: "Spring Boot"
+    technology: "spring_boot_actuator"
+    confidence: "high"
+
+  - pattern: "<title>JBoss"
+    technology: "jboss_wildfly"
+    confidence: "high"
+
+  - pattern: "WildFly"
+    technology: "jboss_wildfly"
+    confidence: "high"
+
+  - pattern: "Undertow"
+    technology: "jboss_wildfly"
+    confidence: "medium"
+
+  - pattern: "WebLogic Server"
+    technology: "weblogic"
+    confidence: "high"
+
+  - pattern: "Oracle WebLogic"
+    technology: "weblogic"
+    confidence: "high"
+
+  - pattern: "Error 404--Not Found"
+    technology: "weblogic"
+    confidence: "high"
+    notes: "WebLogic default 404 format"
+
+  - pattern: "Error 403--Forbidden"
+    technology: "weblogic"
+    confidence: "high"
+
+  - pattern: "GlassFish Server"
+    technology: "glassfish"
+    confidence: "high"
+
+  - pattern: "Payara Server"
+    technology: "glassfish"
+    confidence: "medium"
+
+  - pattern: "Powered by Jetty"
+    technology: "jetty"
+    confidence: "high"
+
+  - pattern: "Jenkins"
+    technology: "jenkins"
+    confidence: "medium"
+
+  - pattern: "Liferay Portal"
+    technology: "liferay"
+    confidence: "high"
+
+  - pattern: "Liferay DXP"
+    technology: "liferay"
+    confidence: "high"
+
+  - pattern: "Atlassian"
+    technology: "atlassian"
+    confidence: "medium"
+
+  - pattern: "JIRA"
+    technology: "atlassian"
+    confidence: "high"
+
+  - pattern: "Confluence"
+    technology: "atlassian"
+    confidence: "high"
+
+  - pattern: "ColdFusion"
+    technology: "coldfusion"
+    confidence: "high"
+
+  - pattern: "Struts Problem Report"
+    technology: "struts"
+    confidence: "high"
+
+  - pattern: "There is no Action mapped"
+    technology: "struts"
+    confidence: "high"
+
+  - pattern: "org.apache.struts"
+    technology: "struts"
+    confidence: "high"
+
+  - pattern: "Solr Admin"
+    technology: "solr"
+    confidence: "high"
+
+  - pattern: "Apache Solr"
+    technology: "solr"
+    confidence: "high"
+
+  - pattern: "XXL-JOB"
+    technology: "xxl_job"
+    confidence: "high"
+
+  - pattern: "Druid Stat"
+    technology: "druid"
+    confidence: "high"
+
+  - pattern: "Nacos"
+    technology: "nacos"
+    confidence: "high"
+
+  - pattern: "Apache OFBiz"
+    technology: "ofbiz"
+    confidence: "high"
+
+  - pattern: "OFBiz"
+    technology: "ofbiz"
+    confidence: "medium"
+
+  - pattern: "ActiveMQ"
+    technology: "activemq"
+    confidence: "high"
+
+  - pattern: "Apache ActiveMQ"
+    technology: "activemq"
+    confidence: "high"
+
+  - pattern: "Apache Flink"
+    technology: "flink"
+    confidence: "high"
+
+  - pattern: "Flink Web Dashboard"
+    technology: "flink"
+    confidence: "high"
+
+  - pattern: "Hadoop"
+    technology: "hadoop_yarn"
+    confidence: "medium"
+
+  - pattern: "ResourceManager"
+    technology: "hadoop_yarn"
+    confidence: "medium"
+
+  - pattern: "NameNode"
+    technology: "hadoop_yarn"
+    confidence: "medium"
+
+  - pattern: "Spark Master"
+    technology: "spark"
+    confidence: "high"
+
+  - pattern: "Spark Worker"
+    technology: "spark"
+    confidence: "high"
+
+  - pattern: "Keycloak"
+    technology: "keycloak"
+    confidence: "high"
+
+  - pattern: "Nexus Repository Manager"
+    technology: "nexus"
+    confidence: "high"
+
+  - pattern: "Sonatype Nexus"
+    technology: "nexus"
+    confidence: "high"
+
+# HTML meta tags and page content patterns
+html_patterns:
+  - pattern: "<meta name=\"_csrf\""
+    technology: "spring_boot_actuator"
+    confidence: "medium"
+
+  - pattern: "csrf-token"
+    technology: "spring_boot_actuator"
+    confidence: "low"
+
+  - pattern: "Powered by Liferay"
+    technology: "liferay"
+    confidence: "high"
+
+  - pattern: "aui.js"
+    technology: "liferay"
+    confidence: "medium"
+
+  - pattern: "/o/frontend-theme"
+    technology: "liferay"
+    confidence: "high"
+
+  - pattern: "com.atlassian"
+    technology: "atlassian"
+    confidence: "high"
+
+  - pattern: "AJS.Meta"
+    technology: "atlassian"
+    confidence: "high"
+
+  - pattern: "jenkins-hierarchical"
+    technology: "jenkins"
+    confidence: "high"
+
+  - pattern: "/static/[a-f0-9]+/scripts"
+    technology: "jenkins"
+    confidence: "medium"
+
+  - pattern: "elasticSearchUrl"
+    technology: "elasticsearch"
+    confidence: "medium"
+
+  - pattern: "Liferay.ThemeDisplay"
+    technology: "liferay"
+    confidence: "high"
+
+  - pattern: "liferay-portlet"
+    technology: "liferay"
+    confidence: "high"
+
+  - pattern: "rememberMe=deleteMe"
+    technology: "shiro"
+    confidence: "high"
+    notes: "Shiro response to invalid rememberMe cookie"
+
+  - pattern: "Apache ActiveMQ"
+    technology: "activemq"
+    confidence: "high"
+
+  - pattern: "Apache Flink Dashboard"
+    technology: "flink"
+    confidence: "high"
+
+  - pattern: "Hadoop YARN"
+    technology: "hadoop_yarn"
+    confidence: "high"
+
+  - pattern: "keycloak.js"
+    technology: "keycloak"
+    confidence: "high"
+
+  - pattern: "nx-feature-flag"
+    technology: "nexus"
+    confidence: "medium"
+
+# Probe paths - send these to confirm technology detection
+probe_paths:
+  spring_boot_actuator:
+    - path: "/actuator/health"
+      expected_status: [200]
+      expected_content: '{"status"'
+      confidence_boost: "high"
+    - path: "/actuator"
+      expected_status: [200]
+      expected_content: '"_links"'
+      confidence_boost: "high"
+    - path: "/health"
+      expected_status: [200]
+      expected_content: '{"status"'
+      confidence_boost: "medium"
+
+  tomcat:
+    - path: "/manager/html"
+      expected_status: [401, 403]
+      expected_content: "Tomcat"
+      confidence_boost: "high"
+    - path: "/"
+      expected_status: [200]
+      expected_content: "Apache Tomcat"
+      confidence_boost: "high"
+
+  jenkins:
+    - path: "/login"
+      expected_status: [200]
+      expected_content: "Jenkins"
+      confidence_boost: "high"
+    - path: "/api/json"
+      expected_status: [200, 403]
+      confidence_boost: "medium"
+
+  elasticsearch:
+    - path: "/"
+      expected_status: [200]
+      expected_content: '"cluster_name"'
+      confidence_boost: "high"
+    - path: "/_cat"
+      expected_status: [200]
+      expected_content: ""
+      confidence_boost: "medium"
+
+  weblogic:
+    - path: "/console/login/LoginForm.jsp"
+      expected_status: [200]
+      expected_content: "WebLogic"
+      confidence_boost: "high"
+
+  jboss_wildfly:
+    - path: "/jmx-console"
+      expected_status: [200, 401, 403]
+      confidence_boost: "medium"
+
+  atlassian:
+    - path: "/rest/api/latest/serverInfo"
+      expected_status: [200]
+      expected_content: '"serverTitle"'
+      confidence_boost: "high"
+    - path: "/login.action"
+      expected_status: [200]
+      expected_content: "Confluence"
+      confidence_boost: "high"
+
+  liferay:
+    - path: "/api/jsonws"
+      expected_status: [200]
+      expected_content: "jsonws"
+      confidence_boost: "high"
+    - path: "/c/portal/login"
+      expected_status: [200]
+      expected_content: "Liferay"
+      confidence_boost: "high"
+
+  nacos:
+    - path: "/nacos/"
+      expected_status: [200, 302]
+      expected_content: "nacos"
+      confidence_boost: "high"
+
+  solr:
+    - path: "/solr/admin/info/system"
+      expected_status: [200]
+      expected_content: '"solr"'
+      confidence_boost: "high"
+
+  druid:
+    - path: "/druid/index.html"
+      expected_status: [200]
+      expected_content: "Druid"
+      confidence_boost: "high"
+
+  shiro:
+    - path: "/login"
+      expected_status: [200]
+      expected_content: ""
+      confidence_boost: "low"
+      notes: "Detection is primarily via rememberMe cookie, not probe path"
+
+  ofbiz:
+    - path: "/control/main"
+      expected_status: [200, 302]
+      expected_content: "OFBiz"
+      confidence_boost: "high"
+    - path: "/webtools/control/main"
+      expected_status: [200, 302]
+      expected_content: ""
+      confidence_boost: "medium"
+
+  activemq:
+    - path: "/admin/"
+      expected_status: [200, 401]
+      expected_content: "ActiveMQ"
+      confidence_boost: "high"
+
+  flink:
+    - path: "/overview"
+      expected_status: [200]
+      expected_content: "flink-version"
+      confidence_boost: "high"
+
+  hadoop_yarn:
+    - path: "/ws/v1/cluster/info"
+      expected_status: [200]
+      expected_content: '"clusterInfo"'
+      confidence_boost: "high"
+    - path: "/cluster"
+      expected_status: [200]
+      expected_content: "ResourceManager"
+      confidence_boost: "high"
+
+  spark:
+    - path: "/api/v1/applications"
+      expected_status: [200]
+      expected_content: ""
+      confidence_boost: "high"
+
+  jetty:
+    - path: "/"
+      expected_status: [200, 404]
+      expected_content: "Jetty"
+      confidence_boost: "medium"
+
+  keycloak:
+    - path: "/realms/master/.well-known/openid-configuration"
+      expected_status: [200]
+      expected_content: "openid-configuration"
+      confidence_boost: "high"
+    - path: "/auth/realms/master/.well-known/openid-configuration"
+      expected_status: [200]
+      expected_content: "openid-configuration"
+      confidence_boost: "high"
+
+  nexus:
+    - path: "/service/rest/v1/status"
+      expected_status: [200]
+      expected_content: ""
+      confidence_boost: "high"
+
+# Technology to path group mapping
+# Determines which path groups to scan for each detected technology
+tech_to_paths:
+  spring_boot_actuator:
+    - "spring_boot_actuator"
+    - "jolokia"
+    - "spring_cloud"
+    - "swagger_api_docs"
+    - "prometheus_metrics"
+    - "druid"
+    - "generic"
+  tomcat:
+    - "tomcat"
+    - "spring_boot_actuator"
+    - "jolokia"
+    - "swagger_api_docs"
+    - "generic"
+  jboss_wildfly:
+    - "jboss_wildfly"
+    - "swagger_api_docs"
+    - "generic"
+  jenkins:
+    - "jenkins"
+    - "generic"
+  weblogic:
+    - "weblogic"
+    - "generic"
+  elasticsearch:
+    - "elasticsearch"
+    - "generic"
+  solr:
+    - "solr"
+    - "generic"
+  atlassian:
+    - "atlassian"
+    - "generic"
+  glassfish:
+    - "glassfish"
+    - "generic"
+  coldfusion:
+    - "coldfusion"
+    - "generic"
+  liferay:
+    - "liferay"
+    - "swagger_api_docs"
+    - "generic"
+  struts:
+    - "struts"
+    - "generic"
+  nacos:
+    - "nacos"
+    - "generic"
+  druid:
+    - "druid"
+    - "generic"
+  xxl_job:
+    - "xxl_job"
+    - "generic"
+  spring_cloud:
+    - "spring_cloud"
+    - "spring_boot_actuator"
+    - "jolokia"
+    - "swagger_api_docs"
+    - "generic"
+  shiro:
+    - "shiro"
+    - "spring_boot_actuator"
+    - "generic"
+  ofbiz:
+    - "ofbiz"
+    - "generic"
+  activemq:
+    - "activemq"
+    - "generic"
+  flink:
+    - "flink"
+    - "generic"
+  hadoop_yarn:
+    - "hadoop_yarn"
+    - "spark"
+    - "generic"
+  spark:
+    - "spark"
+    - "generic"
+  jetty:
+    - "jetty"
+    - "spring_boot_actuator"
+    - "jolokia"
+    - "swagger_api_docs"
+    - "generic"
+  keycloak:
+    - "keycloak"
+    - "generic"
+  nexus:
+    - "nexus"
+    - "generic"
+  java_generic:
+    - "spring_boot_actuator"
+    - "jolokia"
+    - "tomcat"
+    - "swagger_api_docs"
+    - "druid"
+    - "nacos"
+    - "generic"
+
+# WAF detection signatures
+waf_signatures:
+  - name: "Cloudflare"
+    headers:
+      - "cf-ray"
+      - "cf-cache-status"
+    server_pattern: "cloudflare"
+    body_pattern: "Attention Required! | Cloudflare"
+
+  - name: "AWS WAF"
+    headers:
+      - "x-amzn-requestid"
+    body_pattern: "403 Forbidden"
+    notes: "Hard to fingerprint, look for AWS-specific headers"
+
+  - name: "Akamai"
+    headers:
+      - "x-akamai-transformed"
+    server_pattern: "AkamaiGHost"
+
+  - name: "Imperva/Incapsula"
+    headers:
+      - "x-iinfo"
+      - "x-cdn"
+    body_pattern: "Incapsula incident"
+    cookie_pattern: "incap_ses_"
+
+  - name: "F5 BIG-IP ASM"
+    headers:
+      - "x-wa-info"
+    cookie_pattern: "TS[a-f0-9]+"
+
+  - name: "ModSecurity"
+    body_pattern: "ModSecurity"
+    server_pattern: "ModSecurity"
+
+  - name: "Sucuri"
+    headers:
+      - "x-sucuri-id"
+    server_pattern: "Sucuri"
+
+  - name: "Barracuda"
+    headers:
+      - "barra_counter_session"
+
+  - name: "Fortinet FortiWeb"
+    cookie_pattern: "FORTIWAFSID"

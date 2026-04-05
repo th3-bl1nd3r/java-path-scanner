@@ -1,0 +1,101 @@
+# Java Path Scanner - Default Configuration
+
+scanner:
+  # Concurrency settings
+  max_concurrent_requests: 50
+  max_concurrent_targets: 10
+
+  # Timeout settings (seconds)
+  request_timeout: 10
+  connect_timeout: 5
+
+  # Rate limiting
+  requests_per_second: 50
+  delay_between_requests: 0.0
+
+  # Retry settings
+  max_retries: 2
+  retry_backoff_factor: 1.5
+
+  # HTTP settings
+  follow_redirects: false
+  max_redirects: 5
+  verify_ssl: true
+
+  # Default User-Agent
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+  # User-Agent rotation pool
+  user_agents:
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15"
+
+fingerprint:
+  # Enable technology fingerprinting before scanning
+  enabled: true
+  # Timeout for fingerprint probes
+  probe_timeout: 5
+  # If fingerprint fails, scan all path groups
+  fallback_to_all: true
+
+bypass:
+  # Default bypass level: passive, moderate, aggressive
+  level: "passive"
+  # Only attempt bypasses on these status codes
+  target_status_codes: [401, 403]
+  # Maximum bypass attempts per path
+  max_attempts_per_path: 30
+  # Consider bypass successful if status code changes to any of these
+  success_status_codes: [200, 301, 302]
+  # Or if content length differs by more than this ratio
+  content_diff_threshold: 0.3
+
+validator:
+  # False positive detection
+  baseline_404_count: 3
+  similarity_threshold: 0.85
+  # Minimum content length to consider a response interesting
+  min_content_length: 50
+  # Maximum content length before truncating for comparison
+  max_compare_length: 10000
+
+reporter:
+  # Default output format
+  default_format: "console"
+  # Available formats: console, json, markdown, html
+  # Console settings
+  show_progress: true
+  verbose: false
+  # File output directory
+  output_dir: "./results"
+
+# Deep check settings
+deep_checks:
+  enabled: true
+  # Check for downloadable heapdumps (only download first bytes to verify)
+  heapdump_probe_bytes: 1024
+  # Try to extract API endpoints from Swagger
+  parse_swagger: true
+  # Check for secrets in env/configprops responses
+  check_secrets: true
+  # Secret patterns to look for
+  secret_patterns:
+    - "password"
+    - "passwd"
+    - "secret"
+    - "api[_-]?key"
+    - "apikey"
+    - "access[_-]?token"
+    - "auth[_-]?token"
+    - "credentials"
+    - "private[_-]?key"
+    - "jdbc:"
+    - "mongodb://"
+    - "redis://"
+    - "amqp://"
+    - "smtp://"
+    - "aws_access_key"
+    - "aws_secret"

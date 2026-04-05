@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Path Scanner Report</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-dim: #8b949e;
+            --critical: #f85149;
+            --high: #db6d28;
+            --medium: #d29922;
+            --low: #3fb950;
+            --info: #58a6ff;
+            --accent: #58a6ff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+        h2 { font-size: 1.5rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; }
+        .meta { color: var(--text-dim); margin-bottom: 2rem; }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .card .count { font-size: 2.5rem; font-weight: 700; }
+        .card .label { color: var(--text-dim); font-size: 0.9rem; }
+        .card.critical .count { color: var(--critical); }
+        .card.high .count { color: var(--high); }
+        .card.medium .count { color: var(--medium); }
+        .card.low .count { color: var(--low); }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-critical { background: var(--critical); color: #fff; }
+        .badge-high { background: var(--high); color: #fff; }
+        .badge-medium { background: var(--medium); color: #000; }
+        .badge-low { background: var(--low); color: #000; }
+        .badge-info { background: var(--info); color: #000; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: var(--surface); font-weight: 600; }
+        tr:hover { background: rgba(88, 166, 255, 0.05); }
+        .finding {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .finding-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .finding-title { font-weight: 600; font-size: 1.1rem; }
+        .finding-detail { margin: 0.5rem 0; }
+        .finding-detail label { color: var(--text-dim); min-width: 120px; display: inline-block; }
+        code {
+            background: rgba(110, 118, 129, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        pre {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            margin: 0.5rem 0;
+        }
+        .secrets-list { list-style: none; }
+        .secrets-list li::before { content: "\26A0 "; color: var(--critical); }
+        .cve-link { color: var(--accent); text-decoration: none; }
+        .cve-link:hover { text-decoration: underline; }
+        a { color: var(--accent); }
+        .target-section { margin-bottom: 3rem; }
+        .tech-badges { margin: 0.5rem 0; }
+        .tech-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            background: rgba(88, 166, 255, 0.15);
+            color: var(--accent);
+            margin: 2px;
+        }
+        .bypass-info {
+            background: rgba(63, 185, 80, 0.1);
+            border-left: 3px solid var(--low);
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+        footer {
+            text-align: center;
+            color: var(--text-dim);
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Java Path Scanner Report</h1>
+        <div class="meta">
+            Generated: {{ .Timestamp }} | Targets: {{ .TargetsCount }} | Total Findings: {{ .TotalFindings }}
+        </div>
+
+        <div class="dashboard">
+            <div class="card critical">
+                <div class="count">{{ .Summary.Critical }}</div>
+                <div class="label">Critical</div>
+            </div>
+            <div class="card high">
+                <div class="count">{{ .Summary.High }}</div>
+                <div class="label">High</div>
+            </div>
+            <div class="card medium">
+                <div class="count">{{ .Summary.Medium }}</div>
+                <div class="label">Medium</div>
+            </div>
+            <div class="card low">
+                <div class="count">{{ .Summary.Low }}</div>
+                <div class="label">Low / Info</div>
+            </div>
+        </div>
+
+        {{ range .Targets }}
+        <div class="target-section">
+            <h2>{{ .URL }}</h2>
+
+            {{ if .Fingerprint }}
+            <div class="tech-badges">
+                {{ range .Fingerprint.Technologies }}
+                <span class="tech-badge">{{ . }}</span>
+                {{ end }}
+                {{ if .Fingerprint.WAF }}
+                <span class="tech-badge" style="background: rgba(248,81,73,0.15); color: var(--critical);">
+                    WAF: {{ .Fingerprint.WAF }}
+                </span>
+                {{ end }}
+            </div>
+            {{ if .Fingerprint.Server }}
+            <div style="color: var(--text-dim); font-size: 0.9rem;">Server: {{ .Fingerprint.Server }}</div>
+            {{ end }}
+            {{ end }}
+
+            {{ if .Findings }}
+            <h3>Findings ({{ len .Findings }})</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Severity</th>
+                        <th>Path</th>
+                        <th>Status</th>
+                        <th>Title</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range $i, $f := .Findings }}
+                    <tr>
+                        <td>{{ add $i 1 }}</td>
+                        <td><span class="badge badge-{{ $f.Severity }}">{{ $f.Severity }}</span></td>
+                        <td><code>{{ $f.Path }}</code></td>
+                        <td>{{ $f.StatusCode }}</td>
+                        <td>{{ truncate $f.Title 70 }}</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+
+            {{ range .Findings }}
+            <div class="finding">
+                <div class="finding-header">
+                    <span class="badge badge-{{ .Severity }}">{{ .Severity }}</span>
+                    <span class="finding-title">{{ .Title }}</span>
+                </div>
+
+                <div class="finding-detail"><label>URL:</label> <code>{{ .URL }}</code></div>
+                <div class="finding-detail"><label>Status:</label> {{ .StatusCode }}</div>
+                <div class="finding-detail"><label>Size:</label> {{ .ContentLength }} bytes</div>
+                <div class="finding-detail"><label>Technology:</label> {{ .Technology }}</div>
+
+                {{ if .BypassTechnique }}
+                <div class="bypass-info">
+                    <strong>Access Control Bypass:</strong> {{ .BypassTechnique }}
+                </div>
+                {{ end }}
+
+                {{ if .CVEs }}
+                <div class="finding-detail">
+                    <label>CVEs:</label>
+                    {{ range .CVEs }}
+                    <a class="cve-link" href="https://nvd.nist.gov/vuln/detail/{{ . }}" target="_blank">{{ . }}</a>
+                    {{ end }}
+                </div>
+                {{ end }}
+
+                {{ if .Description }}
+                <div class="finding-detail" style="margin-top: 0.75rem;">
+                    <p>{{ truncate .Description 500 }}</p>
+                </div>
+                {{ end }}
+
+                {{ if .SecretsFound }}
+                <div style="margin-top: 0.75rem;">
+                    <strong style="color: var(--critical);">Secrets Found:</strong>
+                    <ul class="secrets-list">
+                        {{ range first .SecretsFound 10 }}
+                        <li><code>{{ . }}</code></li>
+                        {{ end }}
+                    </ul>
+                </div>
+                {{ end }}
+
+                {{ if .Remediation }}
+                <div class="finding-detail" style="margin-top: 0.75rem;">
+                    <label>Remediation:</label> {{ truncate .Remediation 300 }}
+                </div>
+                {{ end }}
+
+                {{ if .References }}
+                <div style="margin-top: 0.5rem;">
+                    <label style="color: var(--text-dim);">References:</label>
+                    <ul>
+                        {{ range .References }}
+                        <li><a href="{{ . }}" target="_blank">{{ . }}</a></li>
+                        {{ end }}
+                    </ul>
+                </div>
+                {{ end }}
+            </div>
+            {{ end }}
+
+            {{ else }}
+            <p style="color: var(--text-dim);">No findings for this target.</p>
+            {{ end }}
+        </div>
+        {{ end }}
+
+        <footer>
+            Generated by Java Path Scanner v1.0 | For authorized security testing only
+        </footer>
+    </div>
+</body>
+</html>

