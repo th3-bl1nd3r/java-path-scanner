@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/nghia/java-path-scanner/pkg/httpclient"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/httpclient"
 )
 
 func TestValidatorClassification(t *testing.T) {

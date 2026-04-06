@@ -1,5 +1,5 @@
 BINARY = jps
-MODULE = github.com/nghia/java-path-scanner
+MODULE = github.com/th3-bl1nd3r/java-path-scanner
 VERSION = 1.0.0
 
 .PHONY: all build test clean install

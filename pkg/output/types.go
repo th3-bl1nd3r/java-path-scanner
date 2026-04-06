@@ -1,8 +1,8 @@
 package output
 
 import (
-	"github.com/nghia/java-path-scanner/pkg/bypass"
-	"github.com/nghia/java-path-scanner/pkg/fingerprint"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/bypass"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/fingerprint"
 )
 
 // Finding represents a confirmed security finding.

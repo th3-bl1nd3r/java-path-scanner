@@ -1,4 +1,4 @@
-module github.com/nghia/java-path-scanner
+module github.com/th3-bl1nd3r/java-path-scanner
 
 go 1.25.6
 

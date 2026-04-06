@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/nghia/java-path-scanner/pkg/httpclient"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/httpclient"
 )
 
 // AnalyzeActuatorEnv performs deep analysis of /actuator/env response.

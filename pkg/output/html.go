@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/nghia/java-path-scanner/internal/knowledge"
+	"github.com/th3-bl1nd3r/java-path-scanner/internal/knowledge"
 )
 
 // HTMLWriter generates a standalone HTML report.

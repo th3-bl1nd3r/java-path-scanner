@@ -4,7 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/nghia/java-path-scanner/pkg/httpclient"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/httpclient"
 )
 
 // PathResult represents the result of scanning a single path.

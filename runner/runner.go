@@ -14,14 +14,14 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/ratelimit"
 
-	"github.com/nghia/java-path-scanner/internal/knowledge"
-	"github.com/nghia/java-path-scanner/pkg/bypass"
-	"github.com/nghia/java-path-scanner/pkg/fingerprint"
-	"github.com/nghia/java-path-scanner/pkg/httpclient"
-	"github.com/nghia/java-path-scanner/pkg/output"
-	"github.com/nghia/java-path-scanner/pkg/scanner"
-	"github.com/nghia/java-path-scanner/pkg/urlutil"
-	"github.com/nghia/java-path-scanner/pkg/validator"
+	"github.com/th3-bl1nd3r/java-path-scanner/internal/knowledge"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/bypass"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/fingerprint"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/httpclient"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/output"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/scanner"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/urlutil"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/validator"
 )
 
 // Runner is the main scan orchestrator.

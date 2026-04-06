@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/nghia/java-path-scanner/pkg/httpclient"
-	"github.com/nghia/java-path-scanner/pkg/urlutil"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/httpclient"
+	"github.com/th3-bl1nd3r/java-path-scanner/pkg/urlutil"
 )
 
 // SecretPattern defines a regex pattern and its type.

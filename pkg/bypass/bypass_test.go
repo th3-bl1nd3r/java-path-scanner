@@ -3,7 +3,7 @@ package bypass
 import (
 	"testing"
 
-	"github.com/nghia/java-path-scanner/internal/knowledge"
+	"github.com/th3-bl1nd3r/java-path-scanner/internal/knowledge"
 )
 
 func loadTestEngine(t *testing.T, level string, maxAttempts int) *Engine {
