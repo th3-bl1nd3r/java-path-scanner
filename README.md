@@ -33,7 +33,7 @@ Or build from source:
 
 ```bash
 git clone https://github.com/th3-bl1nd3r/java-path-scanner.git
-cd java-path-scanner/java-path-scanner-go
+cd java-path-scanner
 make build
 ```
 
